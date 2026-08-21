@@ -93,9 +93,35 @@
   </div>
 </div>
 <div id="toast" class="toast"></div>
-<script src="js/state.js"></script>
-<script src="js/map.js"></script>
-<script src="js/sim.js"></script>
-<script src="js/ui.js"></script>
+<script src="state.js"></script>
+<script src="map.js"></script>
+<script src="sim.js"></script>
+<script src="ui.js"></script>
+
+<div id="startupError" style="display:none;position:fixed;inset:0;background:#080b0ef2;color:#eee;z-index:9999;padding:28px;font-family:Arial,sans-serif">
+  <div style="max-width:720px;margin:12vh auto;background:#11171c;border:1px solid #7a6540;padding:24px">
+    <h2 style="margin-top:0;color:#e5c887">Ardenia failed to start</h2>
+    <p id="startupErrorText" style="line-height:1.6;color:#b9c0c5"></p>
+    <p style="font-size:12px;color:#7f8990">Check that game.html, style.css, state.js, map.js, sim.js and ui.js are all in the same GitHub Pages directory.</p>
+  </div>
+</div>
+<script>
+window.addEventListener("error", function(e){
+  const box=document.getElementById("startupError");
+  const text=document.getElementById("startupErrorText");
+  if(box && text){
+    text.textContent=(e.message||"A JavaScript error occurred.")+" — "+(e.filename||"");
+    box.style.display="block";
+  }
+});
+window.addEventListener("unhandledrejection", function(e){
+  const box=document.getElementById("startupError");
+  const text=document.getElementById("startupErrorText");
+  if(box && text){
+    text.textContent="A game script failed to initialize: "+(e.reason?.message||String(e.reason));
+    box.style.display="block";
+  }
+});
+</script>
 </body>
 </html>
