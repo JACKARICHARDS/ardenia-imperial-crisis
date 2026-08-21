@@ -1,0 +1,782 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ardenia: The Imperial Crisis</title>
+<style>
+:root{--bg:#0b0d10;--panel:#13171b;--panel2:#191e23;--line:#343a40;--gold:#b89a61;--text:#e7e3da;--muted:#9da3a8;--red:#a85b56;--green:#6e9a76;--blue:#647e9c}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif}
+header{height:76px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 24px;background:#0d1013;position:sticky;top:0;z-index:20}
+.brand{font-family:Georgia,serif;letter-spacing:2px}.brand b{font-size:22px}.brand span{display:block;color:var(--muted);font-size:11px;letter-spacing:1px;margin-top:3px}
+.topstats{display:flex;gap:18px;overflow:auto}.topstats div{min-width:78px}.topstats small{display:block;color:var(--muted);font-size:10px;text-transform:uppercase}.topstats b{font-size:15px}
+nav{position:sticky;top:76px;z-index:19;background:#101419;border-bottom:1px solid var(--line);display:flex;overflow:auto}
+nav button{background:none;border:0;border-right:1px solid #252a2f;color:#aeb4b8;padding:13px 15px;white-space:nowrap;cursor:pointer;font-weight:600}
+nav button.active{color:#fff;background:#20252a;box-shadow:inset 0 -2px var(--gold)}
+main{max-width:1450px;margin:auto;padding:20px}.layout{display:grid;grid-template-columns:1.7fr 1fr;gap:16px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);padding:16px}.card h2,.card h3{font-family:Georgia,serif;font-weight:normal;margin:0 0 11px;color:#d8c18d}
+.kicker{font-size:10px;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px}.muted{color:var(--muted)}.tiny{font-size:11px;color:var(--muted)}
+.metric{display:flex;justify-content:space-between;border-bottom:1px solid #272d32;padding:8px 0}.metric:last-child{border-bottom:0}
+.bar{height:5px;background:#30363b;margin-top:5px}.bar i{display:block;height:100%;background:var(--gold)}
+.btn{border:1px solid #5c513f;background:#252a2e;color:#eee;padding:9px 11px;cursor:pointer;margin:4px 3px 0 0;font-weight:600}.btn:hover{background:#30363a}.btn.gold{background:#8e7447;border-color:#b89a61;color:#111}.btn.red{background:#713f3b;border-color:#a85b56}.btn.green{background:#3f5e45;border-color:#6e9a76}
+.event{background:#151a1f;border:1px solid #444a4e;padding:20px}.event h1{font-family:Georgia,serif;font-size:27px;font-weight:normal;margin:6px 0 12px}.quote{font-family:Georgia,serif;font-size:18px;line-height:1.55;color:#ddd;margin:12px 0}.choice{width:100%;text-align:left;padding:12px;margin:5px 0;background:#1d2227;color:#eee;border:1px solid #3b4146;cursor:pointer}.choice:hover{border-color:var(--gold);background:#252a2f}.choice b{color:var(--gold)}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:9px;border-bottom:1px solid #2d3338;font-size:13px}th{color:var(--muted);font-weight:600}
+.mapframe{height:590px;border:1px solid #41494d;background:#506e78;overflow:hidden}.politicalmap{display:block;width:100%;height:100%}
+.svgprov{cursor:pointer;transition:filter .15s}.svgprov rect{stroke:#151719;stroke-width:.55;vector-effect:non-scaling-stroke}.svgprov text{font:700 1.35px Arial,sans-serif;fill:#111;pointer-events:none}.svgprov .ownertext{font-size:1.0px;font-weight:600;opacity:.8}.svgprov:hover{filter:brightness(1.22)}.svgwar rect{stroke:#f0d17d;stroke-width:1.25;stroke-dasharray:2 1}
+.maptitle{font:700 1.8px Georgia,serif;letter-spacing:.35px;fill:#eee;opacity:.8}.maplegend{display:flex;gap:8px;flex-wrap:wrap;padding:10px 0}.maplegend span{font-size:11px;color:#c8cdd0}.maplegend i{display:inline-block;width:10px;height:10px;border:1px solid #222;margin-right:4px;vertical-align:-1px}.mapstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.mapstats div{background:#101419;border:1px solid #2c3237;padding:10px}.mapstats small{display:block;color:var(--muted);font-size:10px;text-transform:uppercase}.mapstats b{font-size:13px}
+.tabs{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px}.tabs button{background:#171c20;color:#b9c0c4;border:1px solid var(--line);padding:7px 10px;cursor:pointer}.tabs button.sel{color:#fff;border-color:var(--gold)}
+.paper{background:#e5dfd0;color:#211f1b;padding:24px;border:1px solid #8e8779}.paper h1{text-align:center;font:34px Georgia;margin:0;border-bottom:2px solid #2a2721;padding-bottom:8px}.article{padding:13px 0;border-bottom:1px solid #aaa18f}.article h3{margin:0 0 5px;font:20px Georgia}
+.portrait{width:70px;height:70px;background:#292e32;border:1px solid #555;display:flex;align-items:center;justify-content:center;font:28px Georgia;color:#cdb276}
+.person{display:flex;gap:12px}.person h2{margin:0 0 4px}
+.toast{position:fixed;right:18px;bottom:18px;z-index:50;background:#eee3cb;color:#111;padding:12px 15px;border-left:4px solid var(--gold);max-width:390px;display:none}
+.log{max-height:250px;overflow:auto;background:#0e1215;border:1px solid #292f34;padding:10px}.log p{border-bottom:1px solid #252a2e;padding-bottom:7px}
+.tag{display:inline-block;padding:3px 6px;border:1px solid #4a4f52;margin:2px;font-size:10px;color:#bfc4c6}.danger{color:#e58a83}.good{color:#82bd8c}
+@media(max-width:900px){header{height:auto;display:block;padding:13px}.topstats{margin-top:10px}.layout{grid-template-columns:1fr}nav{top:0}.mapframe{height:480px}main{padding:12px}}
+.btn:focus,nav button:focus,.choice:focus{outline:2px solid var(--gold);outline-offset:1px}
+</style>
+
+<style id="imperial-ui-v14">
+:root{
+ --gold:#c9a65b;--gold2:#ead39a;--ink:#0a0d10;--panel:#11161b;--panel2:#171d23;
+ --line:#3c4349;--muted:#98a0a7;--good:#79a56d;--bad:#a84e4e;--blue:#5f7fa7
+}
+body{background:#080b0e!important}
+#grandStrategyShell{position:relative;z-index:50;max-width:1500px;margin:0 auto;padding:8px 10px 28px;
+ font-family:Georgia,"Times New Roman",serif}
+.gs-top{display:grid;grid-template-columns:300px 1fr 160px;gap:8px;align-items:stretch;
+ border:1px solid #4b4b42;background:#0c1014;box-shadow:0 12px 35px #0008}
+.gs-brand{padding:15px 18px;border-right:1px solid var(--line)}
+.gs-brand .crest{font-size:30px;color:var(--gold);float:left;margin-right:10px}
+.gs-brand b{font-size:27px;letter-spacing:.08em;color:#e8dfcc}.gs-brand small{display:block;color:var(--gold);letter-spacing:.24em}
+.gs-metrics{display:grid;grid-template-columns:repeat(7,1fr);min-width:0}
+.gs-metric{padding:10px 7px;border-right:1px solid #242a2f;text-align:center}
+.gs-metric small{display:block;color:#7f878d;font:9px Arial;text-transform:uppercase;letter-spacing:.08em}
+.gs-metric strong{font:700 14px Arial;color:#e4e0d5}.gs-metric.bad strong{color:#cf625e}.gs-metric.good strong{color:#82b878}
+.gs-date{padding:10px;text-align:center;border-left:1px solid var(--line)}.gs-date b{font-size:16px}.gs-date button{margin-top:7px}
+.gs-nav{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-top:0;background:#0c1014}
+.gs-nav button{flex:1;min-width:100px;border:0;border-right:1px solid #242a2f;background:#10151a;color:#aeb4b8;
+ padding:11px 8px;font:10px Arial;letter-spacing:.12em}.gs-nav button:hover,.gs-nav button.active{color:#fff;background:#1b2026;box-shadow:inset 0 -2px var(--gold)}
+.gs-layout{display:grid;grid-template-columns:250px minmax(0,1fr) 270px;gap:8px;margin-top:8px}
+.gs-panel{background:linear-gradient(145deg,#151a1f,#0e1216);border:1px solid var(--line);min-width:0}
+.gs-panel h3{font-size:13px;color:#dfc98f;margin:0;padding:11px 13px;border-bottom:1px solid #2a3035;text-transform:uppercase;letter-spacing:.1em}
+.gs-pad{padding:12px}.gs-small{font:11px Arial;color:var(--muted);line-height:1.45}
+.duke-row{display:grid;grid-template-columns:38px 1fr;gap:8px;padding:10px 0;border-bottom:1px solid #262c31}
+.portrait{width:38px;height:48px;background:linear-gradient(#34383b,#15191d);border:1px solid #5b513e;display:grid;place-items:center;color:#d5bf85;font-size:17px}
+.duke-row b{font-size:13px;color:#eee0c3}.bar{height:5px;background:#252b30;margin:3px 0 5px}.bar i{display:block;height:100%;background:var(--gold)}
+.support{margin:8px 0}.support label{font:10px Arial;color:#b4bbc0;display:flex;justify-content:space-between}
+.center-panel{min-height:640px}.view{display:none}.view.active{display:block}
+.map-wrap{position:relative;background:#3e5e66;border-bottom:1px solid var(--line);min-height:590px;overflow:hidden}
+#interactiveMap{width:100%;height:590px;display:block}
+.map-controls{position:absolute;left:10px;top:10px;display:flex;flex-direction:column;gap:5px}
+.map-controls button{width:34px;height:32px;background:#10161acc;border:1px solid #6a5b3e;color:#e6d39b;font-size:17px}
+.map-layers{position:absolute;left:10px;bottom:10px;background:#0c1114e8;border:1px solid #514a3c;padding:8px;font:10px Arial;color:#ddd}
+.map-layers label{display:block;margin:5px}.map-layers input{accent-color:var(--gold)}
+.map-tip{position:absolute;display:none;min-width:210px;max-width:260px;background:#0b0f13f2;border:1px solid #7c6946;
+ padding:10px;color:#ddd;font:11px Arial;pointer-events:none;box-shadow:0 10px 30px #0009}
+.map-tip b{color:#ead39a;display:block;margin-bottom:4px}
+.gs-bottom{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:8px;background:#0c1014}
+.gs-stat{border:1px solid var(--line);padding:12px}.gs-stat small{font:9px Arial;color:#818990;text-transform:uppercase}.gs-stat b{display:block;margin-top:5px;font:700 15px Arial}
+.relation{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #252a2f;font:11px Arial}.rel-good{color:#82b878}.rel-bad{color:#cf625e}
+.news{padding:10px 0;border-bottom:1px solid #292f34}.news b{font-size:12px;color:#e2d5b8}.news p{margin:4px 0;color:#969ea4;font:10px Arial}
+.action-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}.action-grid button{padding:10px;background:#141a1f;border:1px solid #3d4449;color:#ddd;font:10px Arial}.action-grid button:hover{border-color:var(--gold);color:#fff}
+.dossier{padding:15px;border-top:1px solid var(--line);background:#0c1014}.dossier h2{margin:0 0 8px;color:#ead39a}.dossier-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.dossier-grid div{background:#151a1f;padding:8px;font:10px Arial}.dossier-grid b{display:block;color:#eee;margin-top:3px}
+@media(max-width:1050px){.gs-top{grid-template-columns:1fr}.gs-brand{border-right:0;border-bottom:1px solid var(--line)}.gs-metrics{grid-template-columns:repeat(4,1fr)}.gs-layout{grid-template-columns:210px minmax(0,1fr)}.gs-layout>.right{grid-column:1/-1}.gs-bottom{grid-template-columns:1fr}}
+@media(max-width:720px){#grandStrategyShell{padding:0}.gs-layout{grid-template-columns:1fr}.gs-layout>.left,.gs-layout>.right{display:none}.gs-metrics{grid-template-columns:repeat(2,1fr)}.gs-nav button{min-width:80px}.map-wrap,#interactiveMap{min-height:520px;height:520px}}
+</style>
+
+<style id="legacy-ui-hidden">
+/* The v1.4 shell is the primary interface; legacy markup remains in DOM for compatibility. */
+body > *:not(#grandStrategyShell){display:none!important}
+</style>
+</head>
+<body>
+
+<div id="grandStrategyShell">
+  <header class="gs-top">
+    <div class="gs-brand"><span class="crest">♛</span><b>ARDENIA</b><small>THE IMPERIAL CRISIS</small></div>
+    <div class="gs-metrics" id="gsMetrics"></div>
+    <div class="gs-date"><b id="gsDate">1960 · MARCH</b><div class="gs-small" id="gsWeek">WEEK 1</div><button class="btn gold" onclick="gsNextTurn()">NEXT TURN</button></div>
+  </header>
+  <nav class="gs-nav" id="gsNav">
+    <button class="active" data-view="map">MAP</button><button data-view="imperial">IMPERIAL OFFICE</button>
+    <button data-view="government">GOVERNMENT</button><button data-view="parliament">PARLIAMENT</button>
+    <button data-view="military">MILITARY</button><button data-view="diplomacy">DIPLOMACY</button>
+    <button data-view="intelligence">INTELLIGENCE</button><button data-view="economy">ECONOMY</button><button data-view="press">PRESS</button>
+  </nav>
+
+  <div class="gs-layout">
+    <aside class="gs-panel left">
+      <section><h3>Imperial State</h3><div class="gs-pad gs-small"><b style="color:#eee">Constitutional Empire</b><br>Ruler: Emperor Aurelius VIII<br>Capital: Aurelia<br>Population: 100,000,000</div></section>
+      <section><h3>Ducal Houses</h3><div class="gs-pad" id="gsDukes"></div></section>
+      <section><h3>Popular Support</h3><div class="gs-pad" id="gsSupport"></div></section>
+    </aside>
+
+    <main class="gs-panel center-panel">
+      <section class="view active" id="view-map">
+        <div class="map-wrap">
+          <svg id="interactiveMap" viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid meet"></svg>
+          <div class="map-controls"><button onclick="gsMapZoom(1.15)">+</button><button onclick="gsMapZoom(.87)">−</button><button onclick="gsMapReset()">⌂</button></div>
+          <div class="map-layers">
+            <label><input type="checkbox" checked onchange="gsLayer('names',this.checked)"> Show names</label>
+            <label><input type="checkbox" checked onchange="gsLayer('borders',this.checked)"> Show borders</label>
+            <label><input type="checkbox" onchange="gsLayer('terrain',this.checked)"> Show terrain</label>
+            <label><input type="checkbox" checked onchange="gsLayer('ownership',this.checked)"> Ownership</label>
+          </div>
+          <div id="mapTip" class="map-tip"></div>
+        </div>
+        <div class="gs-bottom">
+          <div class="gs-stat"><small>Imperial territory</small><b id="gsTerritory">—</b></div>
+          <div class="gs-stat"><small>Provinces controlled</small><b id="gsProvinces">—</b></div>
+          <div class="gs-stat"><small>Active fronts</small><b id="gsFronts">—</b></div>
+        </div>
+        <div id="provinceDossier"></div>
+      </section>
+      <section class="view" id="view-imperial"><div class="dossier"><h2>Imperial Office</h2><p>Direct the Crown, manage the Dukes and decide how much authority the Emperor will exercise.</p><div class="action-grid"><button onclick="gsDukeAction('command')">Command a Duke</button><button onclick="gsDukeAction('replace')">Replace a Duke</button><button onclick="gsDukeAction('arrest')">Arrest a Duke</button><button onclick="gsDukeAction('execute')">Execute a Duke</button></div></div></section>
+      <section class="view" id="view-government"><div class="dossier"><h2>Government</h2><p>Manage the cabinet, laws, decrees and constitutional direction of the Empire.</p><div class="action-grid"><button onclick="gsNotice('Government agenda opened')">Cabinet Agenda</button><button onclick="gsNotice('Constitutional reform opened')">Constitution</button><button onclick="gsNotice('Budget opened')">Budget</button><button onclick="gsNotice('Domestic policy opened')">Domestic Policy</button></div></div></section>
+      <section class="view" id="view-parliament"><div class="dossier"><h2>Parliament</h2><p>Track factions, negotiate support and pass legislation.</p><div id="gsParliament"></div></div></section>
+      <section class="view" id="view-military"><div class="dossier"><h2>Military Command</h2><p>Foreign wars, mobilization and territorial campaigns are controlled here.</p><div id="gsMilitary"></div></div></section>
+      <section class="view" id="view-diplomacy"><div class="dossier"><h2>Diplomatic Relations</h2><div id="gsDiplomacy"></div></div></section>
+      <section class="view" id="view-intelligence"><div class="dossier"><h2>Imperial Intelligence</h2><p>Investigate threats, monitor factions and uncover plots.</p><div class="action-grid"><button onclick="gsNotice('Investigation launched')">Investigate Duke</button><button onclick="gsNotice('Foreign operation launched')">Foreign Intelligence</button><button onclick="gsNotice('Counter-intelligence deployed')">Counter-Intelligence</button><button onclick="gsNotice('Opposition monitored')">Monitor Opposition</button></div></div></section>
+      <section class="view" id="view-economy"><div class="dossier"><h2>Economy</h2><div id="gsEconomy"></div></div></section>
+      <section class="view" id="view-press"><div class="dossier"><h2>Imperial Gazette</h2><div id="gsNews"></div></div></section>
+    </main>
+
+    <aside class="gs-panel right">
+      <section><h3>Imperial Gazette</h3><div class="gs-pad" id="gsNewsSide"></div></section>
+      <section><h3>Diplomatic Relations</h3><div class="gs-pad" id="gsRelations"></div></section>
+      <section><h3>Quick Actions</h3><div class="gs-pad action-grid"><button onclick="gsShow('diplomacy')">Diplomacy</button><button onclick="gsShow('economy')">Economy</button><button onclick="gsShow('intelligence')">Intelligence</button><button onclick="gsShow('military')">Military</button><button onclick="gsShow('imperial')">Court</button><button onclick="gsShow('government')">Laws & Decrees</button></div></section>
+    </aside>
+  </div>
+</div>
+<script id="imperial-ui-v14-js">
+(function(){
+ const colors={Ardenia:"#a88a4d",Norland:"#79536f",Albion:"#58769b",Valoria:"#5d7d54","Dravik Union":"#4d7773",Sundara:"#aa9250",Estavia:"#735d86",Karsovia:"#716f65",Meridia:"#527b76",Tavaria:"#876e50"};
+ const pos=[
+ ["Albion Coast",45,90,125,95],["Albion Interior",48,185,145,125],["Valoria",180,220,150,120],["Western Marches",310,185,75,120],
+ ["Meridian Coast",330,60,125,105],["Veyr",360,155,125,120],["Asteria District",410,285,120,100],["Marais",285,400,145,110],["Orsini",430,405,130,110],
+ ["Norland Border",515,130,125,115],["Norland Capital",625,90,150,120],["Norland East",650,220,135,120],["Karsovian Frontier",790,55,150,110],["Karsovian Core",790,185,145,135],
+ ["Estavian North",550,300,130,100],["Estavian South",550,400,130,105],["Dravik West",675,390,115,130],["Dravik East",800,335,140,145],
+ ["Sundara Plains",180,485,150,100],["Sundara Coast",345,505,145,95],["Tavarian West",665,510,145,90],["Tavarian East",815,485,140,110]
+ ];
+ function owner(name){
+   const p=(window.G?.provinces||[]).find(x=>x.name===name);
+   return p?.owner||"Ardenia";
+ }
+ function map(){
+   const svg=document.getElementById("interactiveMap"); if(!svg)return;
+   svg.innerHTML=`<defs><filter id="terrain"><feTurbulence baseFrequency=".035" numOctaves="2" seed="3"/><feColorMatrix values=".2 0 0 0 .3 .2 0 0 0 .3 .2 0 0 0 .3 0 0 0 .08 0"/></filter></defs>
+   <rect width="1000" height="620" fill="#27434b"/><path d="M0 420Q180 340 360 430T700 380T1000 430V620H0Z" fill="#315a61" opacity=".55"/>
+   <text x="500" y="30" text-anchor="middle" fill="#cdbd8f" font-family="Georgia" font-size="18" letter-spacing="5">THE CONTINENTAL THEATER</text>`;
+   pos.forEach(([n,x,y,w,h])=>{
+     const o=owner(n), c=colors[o]||colors.Ardenia;
+     const g=document.createElementNS("http://www.w3.org/2000/svg","g"); g.classList.add("province");
+     g.dataset.name=n;
+     const r=document.createElementNS("http://www.w3.org/2000/svg","rect");
+     r.setAttribute("x",x);r.setAttribute("y",y);r.setAttribute("width",w);r.setAttribute("height",h);r.setAttribute("rx",18);
+     r.setAttribute("fill",c);r.setAttribute("stroke","#17191b");r.setAttribute("stroke-width","3");
+     const t=document.createElementNS("http://www.w3.org/2000/svg","text");t.setAttribute("x",x+w/2);t.setAttribute("y",y+h/2);t.setAttribute("text-anchor","middle");t.setAttribute("fill","#eee7d4");t.setAttribute("font-size","14");t.setAttribute("font-family","Georgia");t.textContent=n;
+     g.append(r,t); g.addEventListener("click",()=>gsProvince(n)); g.addEventListener("mousemove",e=>gsTip(e,n,o)); g.addEventListener("mouseleave",()=>document.getElementById("mapTip").style.display="none");
+     svg.appendChild(g);
+   });
+ }
+ window.gsTip=(e,n,o)=>{const t=document.getElementById("mapTip");t.style.display="block";t.style.left=(e.offsetX+18)+"px";t.style.top=(e.offsetY+18)+"px";t.innerHTML=`<b>${n}</b>${o}<br>Click for province details`;};
+ window.gsProvince=n=>{
+   const p=(window.G?.provinces||[]).find(x=>x.name===n)||{name:n,owner:owner(n),pop:0,loyalty:50,infrastructure:50};
+   document.getElementById("provinceDossier").innerHTML=`<div class="dossier"><h2>${n}</h2><div class="dossier-grid"><div>OWNER<b>${p.owner}</b></div><div>POPULATION<b>${Number(p.pop||0).toLocaleString()}</b></div><div>LOYALTY<b>${p.loyalty??50}%</b></div><div>INFRASTRUCTURE<b>${p.infrastructure??50}%</b></div><div>STATUS<b>${p.owner==="Ardenia"?"Imperial":"Foreign"}</b></div><div>ACTION<b><button class="btn" onclick="gsNotice('Province management opened')">Manage</button></b></div></div></div>`;
+ };
+ let gsZoom=1; window.gsMapZoom=v=>{gsZoom=Math.max(.7,Math.min(2.4,gsZoom*v));document.getElementById("interactiveMap").style.transform=`scale(${gsZoom})`;};
+ window.gsMapReset=()=>{gsZoom=1;document.getElementById("interactiveMap").style.transform="scale(1)";};
+ window.gsLayer=(layer,on)=>{if(layer==="names")document.querySelectorAll("#interactiveMap .province text").forEach(t=>t.style.display=on?"":"none");if(layer==="borders")document.querySelectorAll("#interactiveMap .province rect").forEach(r=>r.setAttribute("stroke",on?"#17191b":"none"));if(layer==="terrain"){const svg=document.getElementById("interactiveMap");let terrain=svg.querySelector("#terrainOverlay");if(on&&!terrain){terrain=document.createElementNS("http://www.w3.org/2000/svg","rect");terrain.id="terrainOverlay";terrain.setAttribute("x","0");terrain.setAttribute("y","0");terrain.setAttribute("width","1000");terrain.setAttribute("height","620");terrain.setAttribute("fill","url(#terrain)");terrain.setAttribute("opacity",".16");svg.appendChild(terrain)}else if(!on&&terrain)terrain.remove()}if(layer==="ownership")document.querySelectorAll("#interactiveMap .province").forEach(g=>g.style.opacity=on?"1":".45")};
+ window.gsShow=id=>{document.querySelectorAll(".gs-nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===id));document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id==="view-"+id));};
+ document.getElementById("gsNav").addEventListener("click",e=>{if(e.target.dataset.view)gsShow(e.target.dataset.view)});
+ window.gsNotice=m=>{if(typeof toast==="function")toast(m);else alert(m)};
+ window.gsNextTurn=()=>{if(typeof nextMonth==="function")nextMonth();else gsNotice("Turn system unavailable");setTimeout(gsRender,50);};
+ window.gsDukeAction=action=>{const d=window.G?.dukes?.find(x=>x.id===window.gsSelectedDuke)||window.G?.dukes?.[0];if(d&&typeof dukeAction==="function")dukeAction(d.id,action);else gsNotice("No Duke available")};
+ function gsRender(){
+   const g=window.G||{};
+   const metrics=[["TREASURY",g.treasury??0,""],["GDP",g.gdp??0,""],["GROWTH",((g.growth??2.3))+"%","good"],["DEBT",((g.debt??100))+"%","bad"],["INFLATION",((g.inflation??6.2))+"%","bad"],["UNEMPLOYMENT",((g.unemployment??8.1))+"%",""],["STABILITY",((g.stability??32))+"%","bad"],["LEGITIMACY",((g.legitimacy??52))+"%",""]];
+   document.getElementById("gsMetrics").innerHTML=metrics.map(x=>`<div class="gs-metric ${x[2]}"><small>${x[0]}</small><strong>${typeof x[1]==="number"?x[1].toLocaleString():x[1]}</strong></div>`).join("");
+   document.getElementById("gsDate").textContent=`${g.year||1960} · ${String(g.month||3).padStart(2,"0")}`;
+   document.getElementById("gsWeek").textContent=`WEEK ${g.turn||1}`;
+   document.getElementById("gsDukes").innerHTML=(g.dukes||[]).map((d,i)=>`<div class="duke-row" onclick="window.gsSelectedDuke='${d.id||""}';gsRender()"><div class="portrait">♜</div><div><b>${d.name||"Duke"}</b><div class="gs-small">Loyalty ${d.loyalty??50}%</div><div class="bar"><i style="width:${d.loyalty??50}%"></i></div><div class="gs-small">Autonomy ${d.autonomy??50}% · Military ${d.military??50}%</div></div></div>`).join("")||'<div class="gs-small">No Dukes recorded.</div>';
+   const parties=g.parties||[{name:"Monarchists",support:42},{name:"Conservatives",support:26},{name:"Liberals",support:15},{name:"Socialists",support:8},{name:"Republicans",support:9}];
+   document.getElementById("gsSupport").innerHTML=parties.map(p=>`<div class="support"><label><span>${p.name}</span><span>${p.support}%</span></label><div class="bar"><i style="width:${p.support}%"></i></div></div>`).join("");
+   const ars=(g.provinces||[]).filter(p=>p.owner==="Ardenia");document.getElementById("gsTerritory").textContent=ars.reduce((a,p)=>a+(Number(p.pop)||0),0).toLocaleString()+" people";document.getElementById("gsProvinces").textContent=`${ars.length} / ${(g.provinces||[]).length}`;document.getElementById("gsFronts").textContent=(g.activeWars||[]).length;
+   const rel=(g.nations||[]).map(n=>`<div class="relation"><span>${n.name}</span><span class="${(n.rel??0)>20?"rel-good":(n.rel??0)<-20?"rel-bad":""}">${n.rel??0}</span></div>`).join("");document.getElementById("gsRelations").innerHTML=rel||'<div class="gs-small">No foreign powers loaded.</div>';document.getElementById("gsDiplomacy").innerHTML=rel||"";
+   document.getElementById("gsNewsSide").innerHTML=(g.log||[]).slice(0,5).map(x=>`<div class="news"><b>${x.message||x}</b><p>${x.date||"Recent"}</p></div>`).join("")||'<div class="gs-small">No recent events.</div>';document.getElementById("gsNews").innerHTML=document.getElementById("gsNewsSide").innerHTML;
+   document.getElementById("gsEconomy").innerHTML=`<div class="dossier-grid"><div>TREASURY<b>${g.treasury??0}</b></div><div>GDP<b>${g.gdp??0}</b></div><div>GROWTH<b>${g.growth??2.3}%</b></div><div>DEBT<b>${g.debt??100}%</b></div><div>INFLATION<b>${g.inflation??6.2}%</b></div><div>UNEMPLOYMENT<b>${g.unemployment??8.1}%</b></div></div>`;
+   document.getElementById("gsParliament").innerHTML=`<p class="gs-small">Coalition support and legislative votes are determined by the underlying game state. Use the Government and policy systems to change the balance.</p>`;
+   document.getElementById("gsMilitary").innerHTML=`<div class="action-grid"><button onclick="gsNotice('Military command opened')">Open Command</button><button onclick="gsNotice('Mobilization order prepared')">Mobilize</button><button onclick="gsNotice('Front report opened')">Front Reports</button><button onclick="gsNotice('Defense planning opened')">Defense Plan</button></div>`;
+   map();
+ }
+ window.addEventListener("load",gsRender);
+})();
+</script>
+
+<header>
+<div class="brand"><b>ARDENIA: THE IMPERIAL CRISIS</b><span>THE POST-CIVIL WAR ERA • 1960</span></div>
+<div class="topstats" id="top"></div>
+</header>
+<nav id="nav"></nav>
+<main id="app"></main>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+const APP_VERSION="1.3.0";
+const SAVE_KEY="ardenia_imperial_crisis_save_v1";
+const MAX_LOG_ENTRIES=80;
+const escHtml=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","":"&quot;","'":"&#39;"}[c]));
+function normalizeState(){
+ if(!G||typeof G!=="object") throw new Error("Invalid state");
+ G.turn=Number.isFinite(G.turn)?G.turn:1; G.year=Number.isFinite(G.year)?G.year:1960; G.month=Number.isFinite(G.month)?G.month:1;
+ G.log=Array.isArray(G.log)?G.log:[]; G.activeWars=Array.isArray(G.activeWars)?G.activeWars:[]; G.dukes=Array.isArray(G.dukes)?G.dukes:[]; G.nations=Array.isArray(G.nations)?G.nations:[]; G.provinces=Array.isArray(G.provinces)?G.provinces:[];
+ G.settings=G.settings||{autosave:true}; return G;
+}
+function saveGame(silent=false){try{normalizeState();localStorage.setItem(SAVE_KEY,JSON.stringify({version:APP_VERSION,state:G}));if(!silent)toast("Game saved.")}catch(e){console.error(e);if(!silent)toast("Could not save the game.")}}
+function loadGame(){try{const raw=localStorage.getItem(SAVE_KEY);if(!raw){toast("No saved game found.");return false}const d=JSON.parse(raw);if(!d?.state)throw Error("Invalid save");G=d.state;normalizeState();render();toast("Game loaded.");return true}catch(e){console.error(e);toast("Save file is invalid or corrupted.");return false}}
+function exportSave(){normalizeState();const b=new Blob([JSON.stringify({version:APP_VERSION,state:G},null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="ardenia-save.json";a.click();URL.revokeObjectURL(a.href)}
+function importSave(file){if(!file)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d?.state)throw Error("Invalid save");G=d.state;normalizeState();saveGame(true);render();toast("Save imported.")}catch(e){console.error(e);toast("That is not a valid Ardenia save.")}};r.readAsText(file)}
+
+
+/* =========================
+   CORE STATE
+========================= */
+const DEFAULT_STATE={
+  year:1960,month:1,turn:1,tab:"Office",sub:"All",
+  emperor:"The Emperor",capital:"Asteria",population:100000000,
+  regime:"Constitutional Empire",constitution:"Provisional Imperial Charter",
+  treasury:44,debt:61,gdp:100,growth:2.1,inflation:3.2,unemployment:8.4,
+  stability:58,legitimacy:63,approval:55,freedom:54,
+  army:82,readiness:76,warSupport:47,diplomacy:52,infrastructure:43,rebellion:21,
+  factions:{crown:62,dukes:72,parliament:47,military:79,business:54,workers:43,republicans:28},
+  parliament:{
+    lords:38,commons:218,
+    parties:[
+      {name:"Imperial Union",short:"IU",seats:92,ideology:"Royalist"},
+      {name:"National Conservatives",short:"NC",seats:64,ideology:"Conservative"},
+      {name:"Reform Party",short:"RP",seats:47,ideology:"Liberal"},
+      {name:"Workers' Party",short:"WP",seats:34,ideology:"Labor"},
+      {name:"Ducal Bloc",short:"DB",seats:27,ideology:"Aristocratic"},
+      {name:"Republican League",short:"RL",seats:18,ideology:"Republican"}
+    ],
+    bills:[]
+  },
+  dukes:[
+    {id:"veyr",name:"Alaric von Veyr",title:"Grand Duke of Veyr",region:"North",pop:22000000,loyalty:63,military:31,wealth:78,autonomy:67,stance:"Militarist",goal:"Preserve Ducal military authority",fear:"Imperial centralization",relation:58},
+    {id:"marais",name:"Lucien de Marais",title:"Grand Duke of Marais",region:"South",pop:15000000,loyalty:54,military:12,wealth:91,autonomy:76,stance:"Traditionalist",goal:"Protect landed privileges",fear:"Agrarian taxation",relation:47},
+    {id:"orsini",name:"Viktor Orsini",title:"Grand Duke of Orsini",region:"East",pop:18000000,military:24,wealth:70,autonomy:71,stance:"Modernizer",goal:"Control industrial reconstruction",fear:"Nationalization",relation:51}
+  ],
+  characters:[
+    {name:"Mara Venn",role:"Imperial Chancellor",loyalty:74,trait:"Pragmatist"},
+    {name:"Lucia Arendt",role:"Minister of Justice",loyalty:61,trait:"Constitutionalist"},
+    {name:"General Viktor Rane",role:"Chief of the Imperial General Staff",loyalty:81,trait:"Professionalist"},
+    {name:"Tomas Vale",role:"Republican Opposition Leader",loyalty:12,trait:"Democrat"}
+  ],
+  provinces:[
+    {id:"ast",name:"Asteria District",owner:"Ardenia",pop:14000000,industry:78,loyalty:70},
+    {id:"vey",name:"Veyr",owner:"Ardenia",pop:22000000,industry:62,loyalty:61,duke:"veyr"},
+    {id:"mar",name:"Marais",owner:"Ardenia",pop:15000000,industry:44,loyalty:53,duke:"marais"},
+    {id:"ors",name:"Orsini",owner:"Ardenia",pop:18000000,industry:72,loyalty:48,duke:"orsini"},
+    {id:"wes",name:"Western Marches",owner:"Ardenia",pop:9000000,industry:51,loyalty:59},
+    {id:"nor1",name:"Norland Border",owner:"Norland",pop:8000000,industry:48,loyalty:31},
+    {id:"nor2",name:"Norland Capital",owner:"Norland",pop:14000000,industry:70,loyalty:46},
+    {id:"nor3",name:"Norland East",owner:"Norland",pop:12000000,industry:39,loyalty:34},
+    {id:"alb1",name:"Albion Coast",owner:"Albion",pop:19000000,industry:76,loyalty:63},
+    {id:"alb2",name:"Albion Interior",owner:"Albion",pop:33000000,industry:58,loyalty:68},
+    {id:"val1",name:"Valorian North",owner:"Valoria",pop:13000000,industry:49,loyalty:71},
+    {id:"val2",name:"Valorian South",owner:"Valoria",pop:14000000,industry:37,loyalty:66},
+    {id:"dra1",name:"Dravik West",owner:"Dravik Union",pop:38000000,industry:64,loyalty:52},
+    {id:"dra2",name:"Dravik East",owner:"Dravik Union",pop:50000000,industry:71,loyalty:49},
+    {id:"sun1",name:"Sundara Plains",owner:"Sundara",pop:21000000,industry:35,loyalty:59},
+    {id:"sun2",name:"Sundara Coast",owner:"Sundara",pop:20000000,industry:55,loyalty:62},
+    {id:"est1",name:"Estavian North",owner:"Estavia",pop:10000000,industry:62,loyalty:54},
+    {id:"est2",name:"Estavian South",owner:"Estavia",pop:12000000,industry:47,loyalty:57},
+    {id:"kar1",name:"Karsovian Frontier",owner:"Karsovia",pop:17000000,industry:41,loyalty:37},
+    {id:"kar2",name:"Karsovian Core",owner:"Karsovia",pop:20000000,industry:66,loyalty:43},
+    {id:"mer1",name:"Meridian Coast",owner:"Meridia",pop:16000000,industry:57,loyalty:76},
+    {id:"tav1",name:"Tavarian West",owner:"Tavaria",pop:29000000,industry:54,loyalty:38},
+    {id:"tav2",name:"Tavarian East",owner:"Tavaria",pop:33000000,industry:63,loyalty:35}
+  ],
+  nations:[
+    {name:"Norland",gov:"Republic",power:86,pop:34000000,rel:28,ally:"Karsovia",war:false},
+    {name:"Albion",gov:"Constitutional Kingdom",power:74,pop:52000000,rel:64,ally:"Meridia",war:false},
+    {name:"Valoria",gov:"Republic",power:52,pop:27000000,rel:71,ally:"",war:false},
+    {name:"Dravik Union",gov:"Federation",power:118,pop:88000000,rel:19,ally:"Tavaria",war:false},
+    {name:"Sundara",gov:"Republic",power:46,pop:41000000,rel:58,ally:"",war:false},
+    {name:"Estavia",gov:"Parliamentary Republic",power:49,pop:22000000,rel:48,ally:"Albion",war:false},
+    {name:"Karsovia",gov:"Military Directorate",power:101,pop:37000000,rel:14,ally:"Norland",war:false},
+    {name:"Meridia",gov:"Constitutional Monarchy",power:39,pop:16000000,rel:77,ally:"Albion",war:false},
+    {name:"Tavaria",gov:"Socialist Republic",power:69,pop:62000000,rel:33,ally:"Dravik Union",war:false}
+  ],
+  laws:{
+    imperialExecutive:false,parliamentOversight:true,ducalCharter:false,emergencyPowers:false,
+    independentJudiciary:false,amnesty:false,securityExpansion:false,civilRights:false,
+    progressiveTax:false,corporateTaxCuts:false,industrialPlan:false,freeMarket:false,stateOwnership:false,
+    laborCode:false,restrictStrikes:false,education:false,veterans:false,housing:false,austerity:false,
+    professionalArmy:false,armyExpansion:false,airModernization:false,navalExpansion:false,civilianControl:false,
+    freePress:false,stateBroadcast:false,pressLicensing:false,investigativePress:false,
+    ducalTax:false,provincialAssemblies:false,imperialGovernors:false,ducalFunds:false,abolishMilitias:false,
+    civicEducation:false,heritage:false,secular:false,concordat:false,nationalService:false,culturalAutonomy:false
+  },
+  activeWars:[],
+  headlines:[
+    ["THE IMPERIAL GAZETTE","The Civil War is over. The Crown begins reconstruction.","Royalist"],
+    ["THE CAPITAL OBSERVER","Three Great Dukes emerge from the war with extraordinary regional power.","Centrist"],
+    ["THE FREE HERALD","Republicans warn that peace without political reform may prove temporary.","Opposition"]
+  ],
+  log:["The Civil War has ended. You inherit a 100-million-person Empire, a powerful army, three ambitious Dukes, and a divided Parliament."],
+  eventIndex:0
+};
+let G=structuredClone(DEFAULT_STATE);
+
+/* =========================
+   HELPERS
+========================= */
+function clamp(v,a=0,b=100){return Math.max(a,Math.min(b,v))}
+function fmt(n){return Math.round(n).toLocaleString()}
+function pct(n){return Math.round(n)+"%"}
+function toast(msg){const e=document.getElementById("toast");e.textContent=msg;e.style.display="block";clearTimeout(window.__toast);window.__toast=setTimeout(()=>e.style.display="none",3300)}
+function log(msg,headline=null){G.log.unshift("["+G.year+"-"+String(G.month).padStart(2,"0")+"] "+msg);G.log=G.log.slice(0,25);if(headline){G.headlines.unshift(headline);G.headlines=G.headlines.slice(0,25)}}
+function normalize(){
+  ["treasury","debt","stability","legitimacy","approval","freedom","army","readiness","warSupport","diplomacy","infrastructure","rebellion","growth","inflation","unemployment"].forEach(k=>{
+    if(typeof G[k]!=="number") G[k]=0;
+  });
+  ["treasury","debt","stability","legitimacy","approval","freedom","army","readiness","warSupport","diplomacy","infrastructure","rebellion"].forEach(k=>G[k]=clamp(G[k]));
+  G.factions && Object.keys(G.factions).forEach(k=>G.factions[k]=clamp(G.factions[k]));
+  G.dukes.forEach(d=>["loyalty","military","wealth","autonomy","relation"].forEach(k=>d[k]=clamp(d[k])));
+}
+function effect(fn,msg,headline){
+  fn();normalize();log(msg,headline);render();toast(msg)
+}
+function bar(label,value){return `<div class="metric"><span>${label}</span><b>${pct(value)}</b></div><div class="bar"><i style="width:${clamp(value)}%"></i></div>`}
+function nextMonth(){
+  G.month++;
+  if(G.month>12){G.month=1;G.year++}
+  G.turn++;
+  // monthly simulation
+  G.treasury += 3 + G.growth*.35 - G.debt*.06;
+  G.debt += G.debt>55 ? 1 : 0;
+  G.inflation += (G.growth>5?0.25:-0.05) + (G.treasury<15?0.2:0);
+  G.unemployment += G.growth>4 ? -0.15 : 0.1;
+  G.approval += (G.unemployment<7?0.5:-0.35) - (G.inflation>7?0.35:0);
+  G.stability += G.rebellion>45 ? -1.2 : 0.25;
+  G.rebellion += G.stability<40 ? 1.1 : -0.2;
+  G.readiness -= G.activeWars.length ? 1 : -0.5;
+  // duke drift
+  G.dukes.forEach(d=>{
+    if(d.autonomy>75 && G.laws.imperialGovernors) d.loyalty-=1.5;
+    if(d.loyalty<35) G.rebellion+=0.4;
+  });
+  // foreign relations drift
+  G.nations.forEach(n=>{if(n.rel<30) n.rel+=0.2; if(n.war) n.power-=1});
+  normalize();
+  eventTick();
+  render();
+}
+function eventTick(){
+  const events=[
+    ["Industrial workers demand a national wage standard.",[
+      ["Negotiate with unions",()=>{G.factions.workers+=6;G.approval+=2;G.treasury-=2}],
+      ["Deploy police to keep factories open",()=>{G.stability+=2;G.freedom-=3;G.factions.workers-=7}],
+      ["Ignore the strike",()=>{G.economyPenalty=0;G.approval-=3;G.economy=G.gdp;G.stability-=2}]
+    ]],
+    ["A foreign newspaper reports rumors of a split among the Great Dukes.",[
+      ["Publicly deny the rumors",()=>{G.legitimacy+=2;G.factions.crown+=2}],
+      ["Investigate privately",()=>{G.diplomacy+=1;G.dukes.forEach(d=>d.relation+=2)}],
+      ["Use the story to pressure the Dukes",()=>{G.factions.dukes-=5;G.stability-=1}]
+    ]],
+    ["The Treasury warns that reconstruction spending is exceeding projections.",[
+      ["Borrow more",()=>{G.debt+=7;G.infrastructure+=3}],
+      ["Cut spending",()=>{G.treasury+=5;G.infrastructure-=3;G.approval-=2}],
+      ["Raise temporary taxes",()=>{G.treasury+=6;G.approval-=3;G.factions.business-=2}]
+    ]]
+  ];
+  if(G.turn%2===0){
+    G.currentEvent=events[(G.eventIndex++)%events.length];
+  }
+}
+function chooseEvent(i){
+  if(!G.currentEvent)return;
+  const o=G.currentEvent[1][i]; if(o){effect(o[1],"You responded to the crisis: "+o[0]+".",["THE IMPERIAL GAZETTE","Government responds to a developing crisis.","Royalist"]);G.currentEvent=null}
+}
+function statTop(){
+ return [
+  ["Treasury",G.treasury.toFixed(0)+"B"],["Debt",G.debt.toFixed(0)+"%"],
+  ["Stability",pct(G.stability)],["Legitimacy",pct(G.legitimacy)],
+  ["Approval",pct(G.approval)],["Year",G.year+"."+String(G.month).padStart(2,"0")]
+ ].map(x=>`<div><small>${x[0]}</small><b>${x[1]}</b></div>`).join("");
+}
+
+/* =========================
+   POLICIES / LAWS
+========================= */
+const POLICIES=[
+["Constitution & Crown",[
+ ["Imperial Executive","Expand executive decree authority.", "imperialExecutive",()=>{G.factions.crown+=8;G.legitimacy-=2;G.freedom-=5}],
+ ["Parliamentary Oversight","Strengthen legislative oversight of the Crown.","parliamentOversight",()=>{G.factions.parliament+=9;G.factions.crown-=5;G.legitimacy+=4}],
+ ["Ducal Charter","Guarantee constitutional privileges for the Great Dukes.","ducalCharter",()=>{G.dukes.forEach(d=>{d.autonomy+=8;d.loyalty+=4});G.factions.dukes+=10}],
+ ["Emergency Powers","Permit temporary emergency decrees under defined conditions.","emergencyPowers",()=>{G.factions.crown+=7;G.freedom-=6;G.stability+=3}]
+]],
+["Justice & Civil Order",[
+ ["Independent Judiciary","Guarantee judicial independence.","independentJudiciary",()=>{G.legitimacy+=7;G.freedom+=6;G.factions.crown-=3}],
+ ["Post-War Amnesty","Grant conditional amnesty to former rebels.","amnesty",()=>{G.rebellion-=12;G.stability+=6;G.factions.republicans+=6}],
+ ["Internal Security Expansion","Expand the Imperial security service.","securityExpansion",()=>{G.rebellion-=7;G.stability+=3;G.freedom-=8}],
+ ["Civil Rights Charter","Codify speech, assembly and due-process protections.","civilRights",()=>{G.freedom+=12;G.legitimacy+=6}]
+]],
+["Economy & Industry",[
+ ["Progressive Income Tax","Increase the burden on high earners.","progressiveTax",()=>{G.treasury+=8;G.approval+=3;G.factions.business-=7;G.factions.workers+=5}],
+ ["Corporate Tax Cuts","Reduce taxes on industrial firms.","corporateTaxCuts",()=>{G.growth+=1.2;G.treasury-=4;G.factions.business+=10}],
+ ["National Industrial Plan","Direct state investment into rail, steel, energy and machinery.","industrialPlan",()=>{G.growth+=2;G.infrastructure+=9;G.treasury-=10;G.debt+=6}],
+ ["Free Market Reform","Privatize selected state enterprises.","freeMarket",()=>{G.growth+=1;G.factions.business+=9;G.factions.workers-=6}],
+ ["State Ownership","Nationalize strategic industries.","stateOwnership",()=>{G.growth+=.5;G.factions.business-=12;G.factions.workers+=4}]
+]],
+["Workers & Society",[
+ ["National Labor Code","Create wage, safety and bargaining standards.","laborCode",()=>{G.factions.workers+=12;G.growth-=.4;G.approval+=4}],
+ ["Restrict Strikes","Limit strikes in critical industries.","restrictStrikes",()=>{G.factions.workers-=9;G.stability+=5;G.freedom-=4;G.growth+=.4}],
+ ["Universal Education","Fund nationwide public education.","education",()=>{G.infrastructure+=5;G.approval+=6;G.treasury-=7;G.legitimacy+=3}],
+ ["Veterans' Settlement","Provide pensions, land and employment programs.","veterans",()=>{G.factions.military+=8;G.approval+=4;G.treasury-=6}],
+ ["Urban Housing Program","Build public housing in industrial cities.","housing",()=>{G.infrastructure+=6;G.approval+=5;G.treasury-=7}],
+ ["Austerity Program","Cut public spending to stabilize debt.","austerity",()=>{G.debt-=9;G.treasury+=5;G.approval-=7;G.factions.workers-=4}]
+]],
+["Military & Defense",[
+ ["Professionalize the Army","Establish a unified professional command.","professionalArmy",()=>{G.army+=6;G.factions.military-=4;G.factions.crown+=7}],
+ ["Expand the Army","Increase the standing force.","armyExpansion",()=>{G.army+=9;G.readiness+=4;G.treasury-=8;G.factions.military+=8}],
+ ["Modernize the Air Force","Fund aircraft and air-defense programs.","airModernization",()=>{G.army+=5;G.readiness+=7;G.treasury-=8}],
+ ["Naval Expansion","Build a blue-water fleet.","navalExpansion",()=>{G.army+=4;G.treasury-=10;G.factions.military+=6}],
+ ["Civilian Control Act","Put all armed formations under one Imperial chain of command.","civilianControl",()=>{G.factions.crown+=8;G.factions.military-=6;G.dukes.forEach(d=>{d.autonomy-=6;d.loyalty-=5})}]
+]],
+["Foreign Affairs",[
+ ["Trade Offensive","Pursue trade agreements with neutral powers.","tradeOffensive",()=>{G.diplomacy+=9;G.growth+=.8}],
+ ["Mutual Defense Pact","Seek a formal defense alliance.","defensePact",()=>{G.diplomacy+=7;G.factions.military+=4}],
+ ["Non-Aligned Doctrine","Avoid permanent alliances.","nonAligned",()=>{G.diplomacy+=3;G.stability+=2}],
+ ["Border Conference","Offer negotiations over disputed frontiers.","borderConference",()=>{G.diplomacy+=10;G.warSupport-=3}],
+ ["Sphere of Influence","Demand recognition of Ardenian strategic interests.","sphere",()=>{G.diplomacy-=5;G.army+=3;G.factions.military+=5}],
+ ["Foreign Aid Program","Fund reconstruction abroad to build influence.","foreignAid",()=>{G.diplomacy+=8;G.treasury-=6}]
+]],
+["Information & Press",[
+ ["Free Press Act","Protect independent newspapers.","freePress",()=>{G.freedom+=10;G.legitimacy+=4;G.factions.crown-=3}],
+ ["State Broadcasting Service","Create a government national broadcaster.","stateBroadcast",()=>{G.factions.crown+=6;G.freedom-=5}],
+ ["Press Licensing","Require newspapers to obtain government licenses.","pressLicensing",()=>{G.freedom-=9;G.stability+=3;G.factions.republicans-=4}],
+ ["Investigative Journalism Grants","Fund independent public-interest reporting.","investigativePress",()=>{G.freedom+=7;G.legitimacy+=4;G.factions.dukes-=3}]
+]],
+["Regional & Ducal Policy",[
+ ["Ducal Tax Equalization","Equalize fiscal contributions from the Great Duchies.","ducalTax",()=>{G.treasury+=8;G.dukes.forEach(d=>{d.loyalty-=7;d.autonomy-=5});G.factions.dukes-=7}],
+ ["Provincial Assemblies","Create elected provincial governments.","provincialAssemblies",()=>{G.legitimacy+=6;G.dukes.forEach(d=>d.autonomy-=4)}],
+ ["Imperial Governors","Replace hereditary regional administration with appointed governors.","imperialGovernors",()=>{G.dukes.forEach(d=>{d.loyalty-=14;d.autonomy-=15});G.factions.crown+=10;G.stability-=4}],
+ ["Ducal Reconstruction Funds","Give each Duke a reconstruction budget.","ducalFunds",()=>{G.dukes.forEach(d=>d.loyalty+=8);G.treasury-=8;G.infrastructure+=6}],
+ ["Abolish Private Militias","Disarm private noble forces.","abolishMilitias",()=>{G.army+=4;G.dukes.forEach(d=>{d.loyalty-=13;d.autonomy-=10});G.factions.crown+=7}]
+]],
+["Culture & National Identity",[
+ ["Imperial Civic Education","Promote a shared civic identity.","civicEducation",()=>{G.stability+=6;G.legitimacy+=3}],
+ ["Royal Heritage Program","Fund monuments and historic restoration.","heritage",()=>{G.legitimacy+=5;G.treasury-=3;G.factions.crown+=5}],
+ ["Secular State","Reduce formal state preference for religious institutions.","secular",()=>{G.freedom+=5;G.factions.crown-=2}],
+ ["Religious Concordat","Give recognized religious institutions protected status.","concordat",()=>{G.stability+=5;G.factions.crown+=3}],
+ ["National Service","Create civilian and military national service.","nationalService",()=>{G.factions.military+=7;G.stability+=4;G.treasury-=5}],
+ ["Cultural Autonomy","Protect local languages and traditions.","culturalAutonomy",()=>{G.stability+=5;G.legitimacy+=4;G.dukes.forEach(d=>d.autonomy+=2)}]
+]]
+];
+function adoptPolicy(index){
+ const [cat,items]=POLICIES[index];
+ const [name,desc,key,fn]=items.find(x=>!G.laws[x[2]])||[];
+ if(!name){toast("All policies in this category have already been enacted.");return}
+ // Most major policies now enter as laws, but the player must spend political capital.
+ const cost=key==="industrialPlan"||key==="navalExpansion"?7:3;
+ if(G.treasury<cost){toast("The Treasury cannot finance this measure.");return}
+ G.treasury-=cost; G.laws[key]=true; fn();
+ log(name+" has been enacted as Imperial law.",["THE IMPERIAL GAZETTE",name+" becomes law after a contested political process.","Government"]);
+ normalize();render();toast(name+" enacted.")
+}
+function policyView(){
+ return `<div class="card"><div class="kicker">Imperial policy</div><h2>Policy Council</h2><p class="muted">Policies are permanent institutional choices. Once enacted, they alter the political and economic rules of the Empire.</p></div>
+ <div class="grid">${POLICIES.map((g,i)=>`<div class="card"><h2>${g[0]}</h2>${g[1].map((p,j)=>`<div class="metric"><span>${p[0]}</span><b>${G.laws[p[2]]?"LAW":"AVAILABLE"}</b></div><p class="tiny">${p[1]}</p>${!G.laws[p[2]]?`<button class="btn gold" onclick="adoptPolicy(${i})">Enact first available policy</button>`:`<span class="tag">Enacted</span>`}`).join("")}</div>`).join("")}</div>`
+}
+
+/* =========================
+   OFFICE / EVENTS
+========================= */
+const DECISIONS=[
+ ["THE FIRST IMPERIAL COUNCIL","Mara Venn, Imperial Chancellor","Your Majesty, the Empire has 100 million citizens, but the treasury is exhausted. The Dukes demand privileges, Parliament demands oversight, and the army wants modernization.",[
+ ["Protect the Dukes' privileges.",()=>{G.factions.dukes+=8;G.dukes.forEach(d=>d.loyalty+=5);G.treasury-=3}],
+ ["Put reconstruction above aristocratic privilege.",()=>{G.factions.parliament+=8;G.dukes.forEach(d=>d.loyalty-=5);G.infrastructure+=5}],
+ ["Give the army priority.",()=>{G.factions.military+=9;G.army+=4;G.treasury-=6}]
+ ]],
+ ["THE VEYR MILITARY CHARTER","Alaric von Veyr, Grand Duke","The northern duchy paid in blood. Its officers expect to retain command of its formations. A direct Imperial command threatens our traditional compact.",[
+ ["Accept the Veyr charter.",()=>{G.dukes[0].loyalty+=10;G.dukes[0].autonomy+=8;G.army+=3}],
+ ["There will be one Imperial Army.",()=>{G.dukes[0].loyalty-=16;G.dukes[0].autonomy-=12;G.legitimacy+=4;G.factions.crown+=6}],
+ ["Compromise: Veyr officers swear directly to the Crown.",()=>{G.dukes[0].loyalty+=3;G.dukes[0].autonomy-=2;G.legitimacy+=2}]
+ ]],
+ ["THE SOUTHERN TAX QUESTION","Lucien de Marais, Grand Duke","A land tax will cripple the estates. The South already feeds the Empire. We ask that traditional exemptions remain.",[
+ ["Protect noble exemptions.",()=>{G.dukes[1].loyalty+=12;G.factions.dukes+=7;G.treasury-=3;G.approval-=2}],
+ ["End exemptions with progressive land taxation.",()=>{G.dukes[1].loyalty-=18;G.factions.dukes-=8;G.treasury+=9;G.approval+=4}],
+ ["Phase the tax in over five years.",()=>{G.dukes[1].loyalty+=2;G.treasury+=4;G.approval+=2}]
+ ]],
+ ["THE ORSINI PROGRAM","Viktor Orsini, Grand Duke","The East has the mines and factories needed to rebuild. Give the region investment and industrial autonomy, and we can make Ardenia an economic power.",[
+ ["Grant broad economic autonomy.",()=>{G.dukes[2].loyalty+=10;G.dukes[2].autonomy+=9;G.growth+=1.8;G.infrastructure+=5}],
+ ["Nationalize strategic industries.",()=>{G.dukes[2].loyalty-=16;G.dukes[2].autonomy-=12;G.growth+=.7;G.factions.crown+=5}],
+ ["Create Imperial-Ducal joint companies.",()=>{G.dukes[2].loyalty+=5;G.growth+=1.2;G.infrastructure+=3}]
+ ]],
+ ["THE REPUBLICAN QUESTION","Tomas Vale, Republican Opposition Leader","The Civil War ended, but the political question did not. If the Empire wants legitimacy, it must decide whether dissent can exist inside the constitutional order.",[
+ ["Permit legal republican parties.",()=>{G.freedom+=10;G.legitimacy+=5;G.factions.republicans+=12;G.stability-=2}],
+ ["Ban republican organizations.",()=>{G.freedom-=12;G.factions.republicans-=8;G.rebellion+=8}],
+ ["Allow parties but prohibit armed organizations.",()=>{G.freedom+=4;G.legitimacy+=3;G.stability+=2}]
+ ]],
+ ["THE CONSTITUTIONAL SETTLEMENT","Lucia Arendt, Minister of Justice","The wartime charter cannot govern a peacetime Empire forever. We must define the relationship between Crown, Parliament, courts and Dukes.",[
+ ["Build a strong constitutional monarchy.",()=>{G.legitimacy+=8;G.freedom+=5;G.dukes.forEach(d=>d.autonomy-=5);G.factions.parliament+=9;G.constitution="Constitution of the Imperial Realm"}],
+ ["Give the Emperor broad executive authority.",()=>{G.factions.crown+=12;G.factions.parliament-=6;G.freedom-=4;G.constitution="Imperial Executive Constitution"}],
+ ["Make the Dukes constitutional pillars.",()=>{G.dukes.forEach(d=>{d.autonomy+=10;d.loyalty+=5});G.factions.dukes+=14;G.constitution="Ducal Constitutional Compact"}]
+ ]],
+ ["THE NORTHERN FRONTIER","General Viktor Rane, Chief of Staff","Norland is mobilizing. A war could unite the Empire—or destroy the reconstruction budget.",[
+ ["Issue a military ultimatum.",()=>{G.readiness+=5;G.warSupport+=7;G.diplomacy-=8}],
+ ["Invite Norland to a border conference.",()=>{G.diplomacy+=9;G.stability+=2}],
+ ["Strike before Norland is ready.",()=>{declareWar("Norland");G.warSupport+=12;G.diplomacy-=18}]
+ ]],
+ ["THE PARLIAMENTARY CRISIS","Helena Voss, Speaker of the Commons","The budget is on the brink of defeat. Without a coalition, reconstruction spending will stop.",[
+ ["Negotiate regional infrastructure spending.",()=>{G.infrastructure+=7;G.treasury-=6;G.factions.parliament+=10;G.approval+=2}],
+ ["Threaten dissolution.",()=>{G.factions.parliament-=12;G.legitimacy-=5;G.stability-=4}],
+ ["Use the Dukes to pressure legislators.",()=>{G.factions.dukes+=5;G.factions.parliament-=7;G.treasury+=2}]
+ ]]
+];
+function office(){
+ const d=DECISIONS[G.eventIndex%DECISIONS.length];
+ return `<div class="layout"><section><div class="event"><div class="kicker">Imperial Office • ${G.year}/${String(G.month).padStart(2,"0")}</div><h1>${d[0]}</h1><div class="person"><div class="portrait">${d[1][0]}</div><div><b>${d[1]}</b><div class="tiny">Current situation</div></div></div><div class="quote">“${d[2]}”</div>${d[3].map((o,i)=>`<button class="choice" onclick="decision(${i})"><b>${String.fromCharCode(65+i)}.</b> ${o[0]}</button>`).join("")}</div>${G.currentEvent?`<div class="event" style="margin-top:14px"><div class="kicker">Developing Crisis</div><h2>${G.currentEvent[0]}</h2>${G.currentEvent[1].map((o,i)=>`<button class="choice" onclick="chooseEvent(${i})">${o[0]}</button>`).join("")}</div>`:""}</section>
+ <aside>${situationCard()}<div class="card" style="margin-top:14px"><h2>Recent Record</h2><div class="log">${G.log.map(x=>`<p class="tiny">${x}</p>`).join("")}</div></div></aside></div>`
+}
+function decision(i){const d=DECISIONS[G.eventIndex%DECISIONS.length];effect(d[3][i][1],d[3][i][0],["THE IMPERIAL GAZETTE",d[0]+": the Emperor has chosen a course of action.","Government"]);G.eventIndex++;nextMonth()}
+function situationCard(){return `<div class="card"><div class="kicker">State of the Empire</div><h2>${G.regime}</h2>${bar("Stability",G.stability)}${bar("Legitimacy",G.legitimacy)}${bar("Public approval",G.approval)}${bar("Freedom",G.freedom)}<div class="metric"><span>Population</span><b>${fmt(G.population)}</b></div><div class="metric"><span>GDP index</span><b>${G.gdp.toFixed(1)}</b></div><div class="metric"><span>Growth</span><b>${G.growth.toFixed(1)}%</b></div><div class="metric"><span>Unemployment</span><b>${G.unemployment.toFixed(1)}%</b></div></div>`}
+
+/* =========================
+   GOVERNMENT / PARLIAMENT
+========================= */
+function government(){
+ return `<div class="grid"><div class="card"><div class="kicker">Crown</div><h2>The Imperial Government</h2>${Object.entries(G.factions).map(([k,v])=>bar(k[0].toUpperCase()+k.slice(1),v)).join("")}</div>
+ <div class="card"><div class="kicker">Cabinet</div><h2>Principal Ministers</h2>${G.characters.map(c=>`<div class="metric"><span>${c.role}<br><small>${c.name} • ${c.trait}</small></span><b>${pct(c.loyalty)}</b></div>`).join("")}<button class="btn gold" onclick="cabinetMeeting()">Hold Cabinet Meeting</button></div>
+ <div class="card"><div class="kicker">Constitution</div><h2>${G.constitution}</h2><p class="muted">Regime: ${G.regime}</p><p>Active laws: <b>${Object.values(G.laws).filter(Boolean).length}</b></p><button class="btn" onclick="tab='Policy';render()">Open Policy Council</button></div></div>`
+}
+function cabinetMeeting(){effect(()=>{G.approval+=2;G.legitimacy+=1;G.characters.forEach(c=>c.loyalty+=1)},"The Cabinet met at the Palace.","CABINET MEETING")}
+
+function parliament(){
+ const total=G.parliament.parties.reduce((a,p)=>a+p.seats,0);
+ return `<div class="grid"><div class="card"><div class="kicker">Legislature</div><h2>House of Commons</h2><p>${total} seats • Government support ${pct(G.factions.parliament)}</p><table><tr><th>Party</th><th>Seats</th><th>Ideology</th></tr>${G.parliament.parties.map(p=>`<tr><td>${p.name}</td><td>${p.seats}</td><td>${p.ideology}</td></tr>`).join("")}</table></div>
+ <div class="card"><div class="kicker">Legislation</div><h2>Bills & Coalitions</h2><p class="muted">Major reforms can be introduced here. Political support affects whether legislation survives.</p><button class="btn gold" onclick="introduceBill()">Introduce Reconstruction Bill</button><button class="btn" onclick="introduceSecurityBill()">Introduce Security Bill</button><button class="btn" onclick="introduceTaxBill()">Introduce Tax Reform Bill</button>${G.parliament.bills.map(b=>`<div class="metric"><span>${b.name}<br><small>${b.status}</small></span><b>${b.support}%</b></div>`).join("")}</div>
+ <div class="card"><div class="kicker">Upper House</div><h2>Imperial Lords</h2><p>${G.parliament.lords} Great Lords and appointed peers.</p><p class="muted">Ducal influence: ${pct(G.factions.dukes)}</p><button class="btn" onclick="effect(()=>{G.factions.dukes+=3;G.factions.parliament+=2},'The Lords were consulted on the next legislative agenda.','LORDS CONSULTED')">Consult the Lords</button></div></div>`
+}
+function introduceBill(){
+ const support=clamp(G.factions.parliament + G.factions.crown*.2 - G.debt*.05);
+ G.parliament.bills.unshift({name:"Reconstruction Bill",status:support>52?"Passed":"Defeated",support:Math.round(support)});
+ if(support>52) effect(()=>{G.infrastructure+=6;G.treasury-=5;G.approval+=2},"The Reconstruction Bill passed after coalition negotiations.","RECONSTRUCTION BILL PASSES");
+ else effect(()=>{G.approval-=2},"The Reconstruction Bill was defeated.","RECONSTRUCTION BILL DEFEATED");
+}
+function introduceSecurityBill(){const s=G.factions.parliament+G.factions.crown*.25;if(s>57)effect(()=>{G.rebellion-=8;G.freedom-=4},"The Security Bill passed Parliament.","SECURITY BILL PASSES");else effect(()=>{G.legitimacy-=1},"The Security Bill failed to obtain a majority.","SECURITY BILL DEFEATED")}
+function introduceTaxBill(){const s=G.factions.parliament+G.factions.workers*.2-G.factions.business*.12;if(s>48)effect(()=>{G.treasury+=7;G.approval+=2;G.factions.business-=4},"Tax Reform passed the Commons.","TAX REFORM PASSES");else effect(()=>{G.approval-=2},"Tax Reform was defeated.","TAX REFORM DEFEATED")}
+
+/* =========================
+   DUKES
+========================= */
+function dukes(){
+ return `<div class="grid">${G.dukes.map(d=>`<div class="card"><div class="person"><div class="portrait">♜</div><div><h2>${d.name}</h2><div class="muted">${d.title} • ${d.region}</div></div></div><p><span class="tag">${d.stance}</span></p>${bar("Loyalty",d.loyalty)}${bar("Autonomy",d.autonomy)}${bar("Military influence",d.military)}${bar("Wealth",d.wealth)}<p><b>Goal:</b> ${d.goal}<br><b>Fear:</b> ${d.fear}</p><button class="btn gold" onclick="audience('${d.id}')">Private Audience</button><button class="btn" onclick="grantTitle('${d.id}')">Grant Honor</button><button class="btn red" onclick="pressureDuke('${d.id}')">Pressure Duke</button>${dukeActionPanel(d)}</div>`).join("")}</div>`
+}
+function audience(id){const d=G.dukes.find(x=>x.id===id);effect(()=>{d.loyalty+=5;d.relation+=4;G.factions.dukes+=2},"You held a private audience with "+d.name+".","PRIVATE AUDIENCE")}
+function grantTitle(id){const d=G.dukes.find(x=>x.id===id);effect(()=>{d.loyalty+=8;d.wealth+=2;G.factions.dukes+=3;G.treasury-=2},"The Crown granted an honor to "+d.name+".","IMPERIAL HONOR")}
+function pressureDuke(id){const d=G.dukes.find(x=>x.id===id);effect(()=>{d.loyalty-=10;d.autonomy-=7;G.factions.crown+=4;G.stability-=1},"The Crown pressured "+d.name+" to accept Imperial authority.","DUCAL CONFRONTATION")}
+
+/* =========================
+   ECONOMY
+========================= */
+function economy(){
+ return `<div class="grid"><div class="card"><div class="kicker">Macroeconomy</div><h2>Imperial Economy</h2>${bar("Industrial capacity",G.infrastructure)}<div class="metric"><span>GDP index</span><b>${G.gdp.toFixed(1)}</b></div><div class="metric"><span>Annual growth</span><b>${G.growth.toFixed(1)}%</b></div><div class="metric"><span>Inflation</span><b>${G.inflation.toFixed(1)}%</b></div><div class="metric"><span>Unemployment</span><b>${G.unemployment.toFixed(1)}%</b></div></div>
+ <div class="card"><div class="kicker">Finance</div><h2>Treasury</h2><div class="metric"><span>Reserve</span><b>${G.treasury.toFixed(1)}B</b></div><div class="metric"><span>Debt pressure</span><b>${pct(G.debt)}</b></div><button class="btn" onclick="effect(()=>{G.treasury+=8;G.approval-=4;G.factions.workers-=3},'Taxes were increased to stabilize the Treasury.','TAX INCREASE')">Raise Taxes</button><button class="btn" onclick="effect(()=>{G.treasury-=7;G.growth+=.5;G.approval+=3},'The government reduced several tax rates.','TAX CUTS')">Cut Taxes</button><button class="btn gold" onclick="effect(()=>{G.gdp+=3;G.infrastructure+=4;G.treasury-=8;G.debt+=4},'The government launched a new reconstruction package.','RECONSTRUCTION PACKAGE')">Fund Reconstruction</button></div></div>`
+}
+
+/* =========================
+   MILITARY
+========================= */
+function military(){
+ return `<div class="grid"><div class="card"><div class="kicker">Armed Forces</div><h2>Imperial General Staff</h2>${bar("Army strength",G.army)}${bar("Readiness",G.readiness)}${bar("War support",G.warSupport)}<div class="metric"><span>Active Army</span><b>650,000</b></div><div class="metric"><span>Reserves</span><b>1,400,000</b></div><button class="btn gold" onclick="effect(()=>{G.army+=6;G.readiness+=5;G.treasury-=7;G.debt+=4},'The Army begins a modernization program.','ARMY MODERNIZATION')">Modernize</button><button class="btn" onclick="effect(()=>{G.readiness+=9;G.treasury-=3;G.stability-=1},'Reserve formations have been mobilized.','RESERVE MOBILIZATION')">Mobilize Reserves</button></div>
+ <div class="card"><div class="kicker">Wars</div><h2>War Room</h2>${G.activeWars.length?G.activeWars.map(n=>`<div class="metric"><span>${n}</span><b class="danger">WAR</b></div><button class="btn red" onclick="campaign('${n}')">Conduct Campaign</button><button class="btn" onclick="ceasefire('${n}')">Seek Ceasefire</button>`).join(""):"<p class='muted'>The Empire is not currently at war.</p>"}</div></div>`
+}
+function declareWar(name){const n=G.nations.find(x=>x.name===name);if(!n||G.activeWars.includes(name))return;if(G.readiness<30){toast("The armed forces are not ready for war.");return}n.war=true;G.activeWars.push(name);G.diplomacy-=12;G.warSupport+=8;log("War has been declared on "+name+".",["THE IMPERIAL GAZETTE","WAR DECLARED: The Empire enters a new conflict.","War"])}
+function campaign(name){
+ const n=G.nations.find(x=>x.name===name);
+ const chance=clamp(45+G.readiness*.35+G.warSupport*.18-n.power*.28);
+ if(Math.random()*100<chance){
+   const enemyProvs=G.provinces.filter(p=>p.owner===name);
+   if(enemyProvs.length){const p=enemyProvs[Math.floor(Math.random()*enemyProvs.length)];p.owner="Ardenia";p.loyalty=45;G.infrastructure+=1;n.power-=8;G.readiness-=5;G.treasury-=3;G.approval+=2;log("Imperial forces captured "+p.name+" from "+name+".",["THE IMPERIAL GAZETTE","IMPERIAL FORCES CAPTURE "+p.name.toUpperCase(),"War"])}
+   if(G.provinces.filter(p=>p.owner===name).length===0){n.war=false;G.activeWars=G.activeWars.filter(x=>x!==name);n.rel=5;log(name+" has been fully occupied and incorporated into the Empire.",["THE IMPERIAL GAZETTE",name.toUpperCase()+" FALLS TO ARDENIA","Victory"])}
+ }else{G.readiness-=8;G.warSupport-=2;G.approval-=3;log("The campaign against "+name+" failed to achieve its objective.","")}
+ normalize();render()
+}
+function ceasefire(name){const n=G.nations.find(x=>x.name===name);if(n){n.war=false;n.rel-=5;G.activeWars=G.activeWars.filter(x=>x!==name);effect(()=>{G.diplomacy+=4;G.warSupport-=3},"A ceasefire has been opened with "+name+".","CEASEFIRE TALKS")}}
+/* =========================
+   MAP / FOREIGN
+========================= */
+const mapPos={
+"Asteria District":[36,36,12,15],"Veyr":[25,18,17,17],"Marais":[25,55,18,17],
+"Orsini":[43,53,18,18],"Western Marches":[13,38,15,18],
+"Norland Border":[55,12,13,16],"Norland Capital":[68,9,17,19],"Norland East":[72,27,15,18],
+"Albion Coast":[4,8,18,18],"Albion Interior":[4,28,18,22],
+"Valorian North":[5,56,17,16],"Valorian South":[4,73,18,17],
+"Dravik West":[63,54,15,23],"Dravik East":[79,48,17,28],
+"Sundara Plains":[27,76,18,16],"Sundara Coast":[47,78,18,15],
+"Estavian North":[54,32,14,16],"Estavian South":[55,48,14,16],
+"Karsovian Frontier":[82,5,14,18],"Karsovian Core":[80,25,16,21],
+"Meridian Coast":[34,5,14,16],"Tavarian West":[64,78,16,17],"Tavarian East":[82,76,15,17]
+};
+
+function ownerClass(owner){
+  const known={"Ardenia":"ardenia","Norland":"norland","Albion":"albion","Valoria":"valoria",
+    "Dravik Union":"dravik","Sundara":"sundara","Estavia":"estavia","Karsovia":"karsovia",
+    "Meridia":"meridia","Tavaria":"tavaria"};
+  return known[owner]||"neutral";
+}
+function provinceColor(owner){
+  return ({
+    ardenia:"#9a7d4c",norland:"#a86560",albion:"#6882a2",valoria:"#6b926f",
+    dravik:"#77756d",sundara:"#b39b57",estavia:"#927aa0",karsovia:"#855b54",
+    meridia:"#5d8980",tavaria:"#8a795f",neutral:"#888"
+  })[ownerClass(owner)];
+}
+function mapView(){
+  const regions=G.provinces.map(p=>{
+    const z=mapPos[p.name]||[40,40,10,10];
+    const [x,y,w,h]=z;
+    const war=G.activeWars.includes(p.owner);
+    return `<g class="svgprov ${war?"svgwar":""}" onclick="province('${p.id}')" tabindex="0">
+      <rect x="${x}%" y="${y}%" width="${w}%" height="${h}%" rx="1.2%" fill="${provinceColor(p.owner)}"></rect>
+      <text x="${x+w/2}%" y="${y+h/2-1}%" text-anchor="middle">${p.name}</text>
+      <text x="${x+w/2}%" y="${y+h/2+3}%" text-anchor="middle" class="ownertext">${p.owner}</text>
+    </g>`;
+  }).join("");
+  const occupied=G.provinces.filter(p=>p.owner==="Ardenia").reduce((a,p)=>a+p.pop,0);
+  return `<div class="card">
+    <div class="kicker">Strategic theater</div>
+    <h2>Imperial Political Map</h2>
+    <p class="muted">Territory is province-based. Click a province for its dossier. Captured provinces immediately change to Imperial control; foreign borders remain visible so wars can be followed geographically.</p>
+    <div class="mapframe">
+      <svg class="politicalmap" viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="Political map">
+        <defs>
+          <pattern id="grid" width="5" height="5" patternUnits="userSpaceOnUse">
+            <path d="M 5 0 L 0 0 0 5" fill="none" stroke="#ffffff" stroke-opacity=".06" stroke-width=".12"/>
+          </pattern>
+        </defs>
+        <rect width="100" height="100" fill="#5c7780"></rect>
+        <path d="M0 45 C18 38 24 48 37 43 S60 36 73 43 S88 48 100 39 L100 100 L0 100Z" fill="#476973" opacity=".55"></path>
+        <rect width="100" height="100" fill="url(#grid)"></rect>
+        ${regions}
+        <path d="M49 0 L49 100 M0 50 L100 50" stroke="#ffffff" stroke-opacity=".08" stroke-width=".18"></path>
+        <text x="50" y="4" text-anchor="middle" class="maptitle">THE CONTINENTAL THEATER</text>
+      </svg>
+    </div>
+    <div class="maplegend">
+      ${["Ardenia","Norland","Albion","Valoria","Dravik Union","Sundara","Estavia","Karsovia","Meridia","Tavaria"].map(n=>`<span><i style="background:${provinceColor(n)}"></i>${n}</span>`).join("")}
+    </div>
+    <div class="mapstats">
+      <div><small>Imperial territory</small><b>${fmt(occupied)} people</b></div>
+      <div><small>Provinces controlled</small><b>${G.provinces.filter(p=>p.owner==="Ardenia").length}</b></div>
+      <div><small>Active fronts</small><b>${G.activeWars.length}</b></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <div class="tabs"><button class="sel">Foreign Powers</button></div>
+    <table><tr><th>Nation</th><th>Government</th><th>Population</th><th>Power</th><th>Relations</th><th>Action</th></tr>
+    ${G.nations.map(n=>`<tr><td><b>${n.name}</b></td><td>${n.gov}</td><td>${fmt(n.pop)}</td><td>${n.power}</td><td>${n.rel}</td><td><button class="btn" onclick="foreign('${n.name}')">Dossier</button>${n.war?`<button class="btn red" onclick="campaign('${n.name}')">Campaign</button>`:`<button class="btn red" onclick="confirmWar('${n.name}')">Declare War</button>`}</td></tr>`).join("")}</table>
+  </div>`;
+}
+
+function province(id){const p=G.provinces.find(x=>x.id===id);toast(`${p.name} • ${p.owner} • Population ${fmt(p.pop)} • Industry ${p.industry} • Local loyalty ${p.loyalty}%`)}
+function foreign(name){const n=G.nations.find(x=>x.name===name);toast(`${n.name} • ${n.gov} • ${fmt(n.pop)} people • Military power ${n.power} • Relations ${n.rel} • Ally ${n.ally||"None"}`)}
+function confirmWar(name){if(confirm("Declare war on "+name+"? This will affect diplomacy and may activate its allies."))effect(()=>declareWar(name),"The Emperor has ordered war preparations against "+name+".","WAR PREPARATIONS")}
+
+/* =========================
+   NEWSPAPERS / SAVE
+========================= */
+function newspapers(){
+ return `<div class="paper"><h1>THE IMPERIAL PRESS</h1><p style="text-align:center">ASTERIA • ${G.year}</p>${G.headlines.map(h=>`<div class="article"><div class="tiny">${h[0]} • ${h[2]}</div><h3>${h[1]}</h3><p>The government, opposition, markets and foreign capitals are watching the decision closely.</p></div>`).join("")}</div>`
+}
+function resetGame(){if(confirm("Start a new Imperial campaign?")){localStorage.removeItem(SAVE_KEY);location.reload();}}
+
+
+/* =========================
+   IMPERIAL AUTHORITY OVER DUKES
+========================= */
+function dukeAction(id, action){
+  const d=G.dukes.find(x=>x.id===id);
+  if(!d)return;
+  if(action==="command"){
+    // Force service without automatically killing the character.
+    effect(()=>{
+      d.loyalty=clamp(d.loyalty+2);
+      d.autonomy=clamp(d.autonomy-20);
+      d.relation=clamp(d.relation-4);
+      G.factions.crown+=8;
+      G.factions.dukes-=5;
+      G.stability+=2;
+      G.legitimacy-=1;
+    },"The Emperor ordered "+d.name+" into direct Imperial service.","IMPERIAL COMMAND: DUKE SUMMONED");
+  }
+  if(action==="arrest"){
+    if(G.factions.crown<45 || G.stability<30){toast("The Crown lacks the political strength to arrest a Great Duke safely.");return}
+    effect(()=>{
+      d.loyalty=0; d.autonomy=0; d.military=clamp(d.military-18);
+      G.factions.dukes-=14; G.factions.crown+=9; G.stability-=6; G.legitimacy-=5; G.rebellion+=8;
+      G.log.unshift(d.name+" has been arrested by Imperial order.");
+    },"The Emperor ordered "+d.name+" arrested for disobedience.","DUCAL ARREST");
+  }
+  if(action==="execute"){
+    if(G.factions.crown<60 || G.legitimacy<40 || G.stability<25){toast("The Crown cannot safely execute a Great Duke under the current political conditions.");return}
+    const idx=G.dukes.findIndex(x=>x.id===id);
+    if(idx<0)return;
+    effect(()=>{
+      G.dukes.splice(idx,1);
+      G.factions.dukes-=22;
+      G.factions.crown+=12;
+      G.stability-=14;
+      G.legitimacy-=12;
+      G.rebellion+=18;
+      G.approval-=8;
+    },"The Emperor ordered the execution of "+d.name+". The surviving nobility is in uproar.","DUKE EXECUTED BY IMPERIAL ORDER");
+  }
+  if(action==="replace"){
+    if(G.factions.crown<55){toast("The Crown lacks enough political authority to replace a Duke.");return}
+    effect(()=>{
+      d.loyalty=72; d.autonomy=38; d.military=12; d.relation=65;
+      G.factions.crown+=6; G.factions.dukes-=8; G.stability-=3;
+    },"The Emperor stripped "+d.name+" of effective authority and installed a loyal Imperial administrator.","IMPERIAL ADMINISTRATION IMPOSED");
+  }
+}
+
+function dukeActionPanel(d){
+ return `<div style="margin-top:12px;border-top:1px solid #343a40;padding-top:10px">
+   <div class="tiny">IMPERIAL AUTHORITY</div>
+   <button class="btn gold" onclick="dukeAction('${d.id}','command')">Force into Imperial Service</button>
+   <button class="btn" onclick="dukeAction('${d.id}','replace')">Strip Authority & Replace</button>
+   <button class="btn red" onclick="dukeAction('${d.id}','arrest')">Arrest for Treason</button>
+   <button class="btn red" onclick="dukeAction('${d.id}','execute')">Execute by Imperial Order</button>
+   <p class="tiny">High-risk actions can trigger noble resistance, rebellion, loss of legitimacy, or civil war.</p>
+ </div>`;
+}
+
+/* =========================
+   RENDER
+========================= */
+const TABS=["Office","Government","Policy","Parliament","Dukes","Economy","Military","Map","Press"];
+function render(){
+ document.getElementById("top").innerHTML=statTop();
+ document.getElementById("nav").innerHTML=TABS.map(t=>`<button class="${G.tab===t?"active":""}" onclick="G.tab='${t}';render()">${t}</button>`).join("")+
+ `<button onclick="saveGame()">Save</button><button onclick="loadGame()">Load</button><button onclick="exportSave()">Export</button><button onclick="resetGame()">New</button>`;
+ let body="";
+ if(G.tab==="Office")body=office();
+ if(G.tab==="Government")body=government();
+ if(G.tab==="Policy")body=policyView();
+ if(G.tab==="Parliament")body=parliament();
+ if(G.tab==="Dukes")body=dukes();
+ if(G.tab==="Economy")body=economy();
+ if(G.tab==="Military")body=military();
+ if(G.tab==="Map")body=mapView();
+ if(G.tab==="Press")body=newspapers();
+ document.getElementById("app").innerHTML=body;
+}
+normalizeState();normalize();render();
+</script>
+</body>
+</html>
