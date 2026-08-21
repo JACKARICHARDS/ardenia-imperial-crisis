@@ -15,6 +15,7 @@ function nextDay(){
 }
 function economyTick(){
   const stabilityMod=(G.stability-50)/250;
+  (G.resourceNodes||[]).forEach(node=>{const p=provinceByName(node.province);if(p?.owner===G.player) G.resourceStock[node.resource]=(G.resourceStock[node.resource]||0)+node.amount*0.05;});
   const resourceDemand=G.production.reduce((n,l)=>n+l.assigned,0);
   const steelNeed=resourceDemand*0.7, oilNeed=resourceDemand*0.25, electronicsNeed=resourceDemand*0.15;
   const steelAvail=Math.min(G.resourceStock.steel,steelNeed);
@@ -165,8 +166,10 @@ function warTick(){
     if(!adjacentProvince(a.province,target.name) && a.province!==target.name){a.order=null;return}
     a.order.days--;
     if(a.order.days>0)return;
-    const hostile=target.owner!==G.player && G.diplomacy[target.owner]?.war;
-    if(!hostile && target.owner!==G.player){a.order=null;return}
+    if(target.owner!==a.owner){
+      const allowed = a.owner===G.player ? !!G.diplomacy[target.owner]?.war : (target.owner===G.player ? !!G.diplomacy[a.owner]?.war : false);
+      if(!allowed){a.order=null;return}
+    }
     const enemy=G.armies.find(x=>x.province===target.name&&x.owner!==a.owner&&G.diplomacy[x.owner]?.war);
     if(enemy){
       const score=combatScore(a.id,enemy.id)+(G.airWings.filter(w=>w.owner===G.player&&w.mission==="ground_attack"&&w.base===a.province).length*8);
@@ -261,11 +264,14 @@ function deployDivision(divId,provinceName){
 function airTick(){
   (G.airWings||[]).forEach(w=>{
     w.readiness=clamp(w.readiness + (w.mission==="air_superiority"?0.12:0.06));
-    if(w.target && w.owner==="ARD" && G.diplomacy[w.target]?.war){
-      w.aircraft=Math.max(0,w.aircraft-0.03);
-      if(w.mission==="ground_attack"){
-        const hostile=G.armies.filter(a=>a.owner===w.target && a.province===w.targetProvince);
-        hostile.forEach(a=>a.organization=clamp(a.organization-0.15));
+    if(w.owner===G.player && w.targetProvince){
+      const target=provinceByName(w.targetProvince);
+      if(target && target.owner!==G.player && G.diplomacy[target.owner]?.war){
+        w.aircraft=Math.max(0,w.aircraft-0.03);
+        if(w.mission==="ground_attack"){
+          const hostile=G.armies.filter(a=>a.owner===target.owner && a.province===w.targetProvince);
+          hostile.forEach(a=>a.organization=clamp(a.organization-0.15));
+        }
       }
     }
   });

@@ -86,7 +86,14 @@ function initPersistence(){
   document.getElementById("exportBtn").onclick=()=>exportGame();
   document.getElementById("importInput").onchange=e=>importGame(e.target.files[0]);
 }
-window.addEventListener("load",()=>{initTabs();initMap();initClock();initPersistence();renderAll()});
+function showFatalError(err){
+  console.error(err);
+  const app=document.getElementById("app");
+  if(app){const box=document.createElement("div");box.id="fatalError";box.innerHTML=`<div><h2>Game initialization failed</h2><p>The game loaded, but one of its systems failed to initialize.</p><pre>${String(err?.stack||err||"Unknown error").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}</pre><button class="button" onclick="location.reload()">RELOAD GAME</button></div>`;app.prepend(box);}
+}
+window.addEventListener("error",e=>showFatalError(e.error||e.message));
+window.addEventListener("unhandledrejection",e=>showFatalError(e.reason));
+window.addEventListener("load",()=>{try{ensureStateIntegrity();initTabs();initMap();initClock();initPersistence();renderAll();}catch(err){showFatalError(err)}});
 
 function renderArmyDesign(){
   const el=document.getElementById("armyTab");

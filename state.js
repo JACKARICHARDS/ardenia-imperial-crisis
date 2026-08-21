@@ -194,7 +194,8 @@ function makeState(){
   };
 }
 
-let G = ensureStateIntegrity(makeState());
+let G = makeState();
+ensureStateIntegrity();
 
 function clamp(v,a=0,b=100){return Math.max(a,Math.min(b,Number(v)||0))}
 function nationName(id){return NATIONS[id]?.name||id}
