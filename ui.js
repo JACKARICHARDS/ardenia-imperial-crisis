@@ -5,7 +5,7 @@ function fmt(n){return Number(n||0).toLocaleString()}
 function dateText(){return `${G.date.day} ${MONTHS[G.date.month-1]} ${G.date.year}`}
 function renderTop(){
   const stats=[
-    ["TREASURY",G.treasury.toFixed(0),"good"],["POLITICAL",G.politicalPower.toFixed(0),""],["STABILITY",G.stability+"%",""],["LEGITIMACY",G.legitimacy+"%",""],
+    ["MONEY",G.treasury.toFixed(1),"good"],["MONTHLY IN",G.monthlyIncome?.toFixed(1)||"0","good"],["MONTHLY OUT",G.monthlyExpenses?.toFixed(1)||"0","bad"],["POLITICAL",G.politicalPower.toFixed(0),""],["STABILITY",G.stability+"%",""],["LEGITIMACY",G.legitimacy+"%",""],
     ["WAR SUPPORT",G.warSupport+"%",""],["MANPOWER",fmt(G.manpower),"good"],["FACTORIES",G.factories,""]
   ];
   document.getElementById("topStats").innerHTML=stats.map(s=>`<div class="stat ${s[2]}"><small>${s[0]}</small><b>${s[1]}</b></div>`).join("");
@@ -22,6 +22,19 @@ function renderAgenda(){
 function renderArmies(){
   const el=document.getElementById("armyPanel");
   el.innerHTML=G.armies.filter(a=>a.owner===G.player).map(a=>`<div class="army-card ${G.selected?.id===a.id?"selected":""}" onclick="selectArmy('${a.id}')"><b>${a.name}</b><small>${a.province} · STR ${a.strength} · ORG ${a.organization}</small>${a.order?`<span class="pill">ORDER: ${provinceById(a.order.target)?.name||"?"}</span>`:""}</div>`).join("");
+}
+
+function renderGenerals(){
+  const el=document.getElementById("generalsPanel");if(!el)return;
+  el.innerHTML=(G.generals||[]).map(g=>{
+    const army=G.armies.find(a=>a.id===g.army);
+    return `<div class="army-card">
+      <b>${g.name}</b><small>${g.rank} · ATK ${g.attack} · DEF ${g.defense} · LOG ${g.logistics}</small>
+      <div class="button-grid" style="margin-top:5px">
+        ${(G.armies||[]).filter(a=>a.owner===G.player).slice(0,4).map(a=>`<button class="button tiny" onclick="assignGeneral('${a.id}','${g.id}')">${army?.id===a.id?"COMMANDING ":"ASSIGN "}${a.name.replace("Royal ","")}</button>`).join("")}
+      </div>
+    </div>`;
+  }).join("") || '<div class="empty">No generals available.</div>';
 }
 function renderProduction(){
   const used=G.production.reduce((n,l)=>n+l.assigned,0);
@@ -66,12 +79,12 @@ function renderDiplomacy(){
 }
 function renderWar(){
   const wars=G.wars.map(w=>`<div class="row"><div><b>War with ${nationName(w.against)}</b><small>Started ${w.start}</small></div><span class="pill bad">ACTIVE</span></div>`).join("");
-  document.getElementById("warTab").innerHTML=`<div class="dossier"><h2>War Room</h2><p>Armies move between provinces. Battles are resolved automatically when an ordered army reaches a hostile province.</p>${wars||'<div class="empty">No active wars.</div>'}<h3 style="color:var(--gold2)">Command principles</h3><p>1. Declare war through Diplomacy. 2. Select an army. 3. Click a hostile province. 4. Issue an attack order. 5. Advance the clock.</p></div>`;
+  document.getElementById("warTab").innerHTML=`<div class="dossier"><h2>War Room</h2><p>Armies move between provinces. Battles are resolved automatically when an ordered army reaches a hostile province.</p>${wars||'<div class="empty">No active wars.</div>'}<h3 style="color:var(--gold2)">Command Fronts</h3>${(G.fronts||[]).map(f=>`<div class="row"><div><b>${f.name}</b><small>${f.provinceIds.length} provinces · ${f.armyIds.length} armies</small></div><span class="pill">${f.active?"ACTIVE":"PAUSED"}</span></div>`).join("")}<h3 style="color:var(--gold2)">Command principles</h3><p>1. Declare war through Diplomacy. 2. Select an army. 3. Click a hostile province. 4. Issue an attack order. 5. Advance the clock.</p></div>`;
 }
 function renderLedger(){
   document.getElementById("ledgerTab").innerHTML=`<div class="dossier"><h2>Campaign Ledger</h2>${G.log.slice(0,60).map(x=>`<div class="row"><small>${x}</small></div>`).join("")}</div>`;
 }
-function renderAll(){renderTop();renderAgenda();renderArmies();renderProduction();renderWorld();renderSelection();renderPolitics();renderResearch();renderIndustry();renderDiplomacy();renderWar();renderArmyDesign();renderAir();renderNavy();renderLedger();drawMap()}
+function renderAll(){renderTop();renderAgenda();renderArmies();renderGenerals();renderProduction();renderWorld();renderSelection();renderPolitics();renderResearch();renderIndustry();renderDiplomacy();renderWar();renderArmyDesign();renderAir();renderNavy();renderLedger();drawMap()}
 function initTabs(){document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===b));document.querySelectorAll(".tabview").forEach(x=>x.classList.remove("active"));document.getElementById(b.dataset.tab+"Tab").classList.add("active")})}
 function initClock(){
   document.getElementById("pauseBtn").onclick=()=>{G.paused=!G.paused;renderTop()};

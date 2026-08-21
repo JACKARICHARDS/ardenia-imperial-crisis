@@ -15,7 +15,6 @@ function nextDay(){
 }
 function economyTick(){
   const stabilityMod=(G.stability-50)/250;
-  (G.resourceNodes||[]).forEach(node=>{const p=provinceByName(node.province);if(p?.owner===G.player) G.resourceStock[node.resource]=(G.resourceStock[node.resource]||0)+node.amount*0.05;});
   const resourceDemand=G.production.reduce((n,l)=>n+l.assigned,0);
   const steelNeed=resourceDemand*0.7, oilNeed=resourceDemand*0.25, electronicsNeed=resourceDemand*0.15;
   const steelAvail=Math.min(G.resourceStock.steel,steelNeed);
@@ -30,15 +29,21 @@ function economyTick(){
   G.resourceStock.oil=Math.max(0,G.resourceStock.oil-oilAvail);
   G.resourceStock.electronics=Math.max(0,G.resourceStock.electronics-elecAvail);
 
-  G.treasury=Math.max(0,G.treasury + 0.35 + stabilityMod - (G.factories*0.01));
-  G.politicalPower=Math.min(250,G.politicalPower + (G.stability>40?0.85:0.45));
-  G.fuel=Math.max(0,G.fuel + G.resourceStock.oil*0.03 - G.armies.filter(a=>a.owner===G.player).length*0.7);
+  // Monthly finance model: tax/industry income against military, administration and war costs.
+  const dailyIncome = Math.max(0.05, (G.facts||1) * 0.015 + G.civilianFactories * 0.045);
+  const militaryCost = G.armies.filter(a=>a.owner===G.player).length * 0.025
+    + G.divisions.filter(d=>d.army && G.armies.some(a=>a.id===d.army && a.owner===G.player)).length * 0.004;
+  const navalCost = G.fleets.filter(f=>f.owner===G.player).reduce((n,f)=>n+f.ships*.0015,0);
+  G.monthlyIncome = dailyIncome * 30;
+  G.monthlyExpenses = Math.max(0,militaryCost + navalCost + G.warDebt*0.002);
+  G.treasury = Math.max(0, G.treasury + dailyIncome - (G.monthlyExpenses/30) + stabilityMod);
+  G.politicalPower=Math.min(250,G.politicalPower+(G.stability>40?0.85:0.45));
 
+  G.fuel=Math.max(0,G.fuel + G.resourceStock.oil*0.03 - G.armies.filter(a=>a.owner===G.player).length*0.7);
   if(resourceEfficiency<0.75){
     G.stability=clamp(G.stability-0.05);
-    G.news.unshift({date:dateText?.()||"",title:"Industrial Shortage",body:"Resource shortages are reducing factory efficiency."});
   }
-  G.manpower=Math.max(0,G.manpower - G.armies.filter(a=>a.owner===G.player).reduce((n,a)=>n+Math.max(0,100-a.strength)*.03,0));
+  G.manpower=Math.max(0,G.manpower-G.armies.filter(a=>a.owner===G.player).reduce((n,a)=>n+Math.max(0,100-a.strength)*.03,0));
 }
 
 function researchTick(){
@@ -149,6 +154,66 @@ function aiTick(){
     }
   });
 }
+
+function assignGeneral(armyId,generalId){
+  const army=G.armies.find(a=>a.id===armyId);
+  const gen=G.generals.find(g=>g.id===generalId);
+  if(!army||!gen||army.owner!==G.player)return;
+  if(gen.army){
+    const old=G.armies.find(a=>a.id===gen.army);
+    if(old) old.general=null;
+  }
+  army.general=generalId;
+  gen.army=armyId;
+  addNews("Command Appointment",`${gen.name} is now in command of ${army.name}.`);
+  renderAll();
+}
+
+function removeGeneral(armyId){
+  const army=G.armies.find(a=>a.id===armyId);if(!army||!army.general)return;
+  const gen=G.generals.find(g=>g.id===army.general);if(gen)gen.army=null;
+  army.general=null;
+  addNews("Command Reassigned",`${army.name} is temporarily operating without a field commander.`);
+  renderAll();
+}
+
+function setFront(name, provinceIds){
+  const ids=provinceIds.filter(id=>provinceById(id));
+  if(ids.length<2){toast("Select at least two provinces for a front.");return}
+  let front=G.fronts.find(f=>f.name===name);
+  if(!front){front={id:"FR"+Date.now(),name,armyIds:[],provinceIds:ids,active:true};G.fronts.push(front)}
+  else front.provinceIds=ids;
+  addNews("Front Established",`${name} front established across ${ids.length} provinces.`);
+  renderAll();
+}
+
+function assignArmyToFront(armyId,frontId){
+  const front=G.fronts.find(f=>f.id===frontId),army=G.armies.find(a=>a.id===armyId);
+  if(!front||!army||army.owner!==G.player)return;
+  front.armyIds=Array.from(new Set([...front.armyIds,armyId]));
+  addNews("Army Assigned",`${army.name} assigned to the ${front.name}.`);
+  renderAll();
+}
+
+function moveArmyToProvince(armyId,provinceId){
+  const army=G.armies.find(a=>a.id===armyId), target=provinceById(provinceId);
+  if(!army||!target||army.owner!==G.player)return;
+  const current=provinceByName(army.province);
+  const legal=(G.adjacency?.[current?.name]||[]).includes(target.name)||current?.name===target.name;
+  if(!legal){toast("That army can only move to an adjacent province.");return}
+  if(target.owner!==G.player && !G.diplomacy[target.owner]?.war){toast("You are not at war with this nation.");return}
+  army.province=target.name;
+  army.order=null;
+  addNews("Army Movement",`${army.name} moved to ${target.name}.`);
+  renderAll();
+}
+
+function formationBonus(army){
+  if(!army.general)return {attack:0,defense:0,logistics:0};
+  const g=G.generals.find(x=>x.id===army.general);if(!g)return {attack:0,defense:0,logistics:0};
+  return {attack:g.attack*.08,defense:g.defense*.08,logistics:g.logistics*.05};
+}
+
 function combatScore(armyId,enemyId){
   const own=(G.divisions||[]).filter(d=>d.army===armyId);
   const enemy=(G.divisions||[]).filter(d=>d.army===enemyId);
@@ -156,7 +221,9 @@ function combatScore(armyId,enemyId){
     const t=G.divisionTemplates.find(x=>x.id===d.template)||{};
     return sum + (t.softAttack||10)*(d.equipment/100)*(d.org/100)*(d.morale/100);
   },0);
-  return score(own)-score(enemy);
+  const ownArmy=G.armies.find(a=>a.id===armyId), enemyArmy=G.armies.find(a=>a.id===enemyId);
+  const ob=formationBonus(ownArmy), eb=formationBonus(enemyArmy);
+  return score(own)*(1+ob.attack) - score(enemy)*(1+eb.defense);
 }
 function warTick(){
   G.armies.forEach(a=>{

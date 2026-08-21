@@ -45,6 +45,7 @@ function makeState(){
   ];
   return {
     version:VERSION, date:{year:1936,month:1,day:1}, paused:true, speed:1, selected:null,
+    treasury:320,monthlyIncome:18,monthlyExpenses:12,warDebt:0,
     player:"ARD", treasury:320, politicalPower:85, stability:62, legitimacy:68, warSupport:34,
     manpower:1200, factories:18, civilianFactories:12, researchSlots:3,
     fuel:180, steel:90, oil:55, electronics:40,
@@ -136,6 +137,14 @@ function makeState(){
       {id:"F3",name:"Albion Home Fleet",owner:"ALB",zone:"SZ3",ships:37,readiness:88,mission:"patrol"},
       {id:"F4",name:"Norland Flotilla",owner:"NOR",zone:"SZ2",ships:18,readiness:75,mission:"strike"}
     ],
+    generals:[
+      {id:"GEN1",name:"General Viktor Rane",rank:"Field Marshal",skill:4,attack:3,defense:4,logistics:3,army:"A1"},
+      {id:"GEN2",name:"General Helena Voss",rank:"General",skill:3,attack:3,defense:2,logistics:4,army:"A2"},
+      {id:"GEN3",name:"General Lucien Arendt",rank:"General",skill:3,attack:2,defense:4,logistics:2,army:"A3"},
+      {id:"GEN4",name:"General Tomas Vale",rank:"General",skill:2,attack:2,defense:3,logistics:2,army:null}
+    ],
+    fronts:[],
+    dragMode:"select",
     resourceNodes:[
       {province:"Veyr",resource:"steel",amount:35},
       {province:"Orsini",resource:"steel",amount:24},
@@ -217,6 +226,8 @@ function ensureStateIntegrity(){
   G.divisions ||= [];
   G.airWings ||= [];
   G.fleets ||= [];
+  G.generals ||= [];
+  G.fronts ||= [];
   G.supply ||= {nationalStock:1000,networkEfficiency:75,convoyLoss:0};
   G.resourceStock ||= {steel:0,oil:0,electronics:0,rubber:0};
   G.ai ||= {};
