@@ -17,3 +17,7 @@
 #fatalError{position:fixed;inset:0;z-index:9999;background:#090c0eee;display:grid;place-items:center;padding:24px}#fatalError>div{max-width:760px;background:#13191e;border:1px solid #7b5e3d;padding:24px;color:#ddd}#fatalError h2{color:#e3c887;font:24px Georgia;margin:0 0 8px}#fatalError p{font:13px Arial;color:#adb4b8}#fatalError pre{white-space:pre-wrap;background:#0a0d10;border:1px solid #333;padding:12px;max-height:260px;overflow:auto;color:#e2a29b;font:11px monospace}
 
 .front-name{height:24px;background:#10161b;border:1px solid #424a50;color:#ddd;padding:3px 6px;font:10px Arial;width:120px}.unit-marker{user-select:none}.front-layer{pointer-events:none}.front-layer line{animation:frontpulse 1.2s linear infinite}.button.tiny.danger{color:#dd9a92;border-color:#633f3b}
+#frontModeBtn[data-active="1"]{background:#8d7448;color:#101316;border-color:#e0c37f}.province.front-selected rect{stroke:#e8cb82!important;stroke-width:5!important}.front-name{border-radius:2px}
+#worldMap .province path{transition:filter .12s,stroke-width .12s}
+#worldMap .province:hover path{filter:brightness(1.16)}
+#worldMap .unit-marker{filter:drop-shadow(0 2px 2px #0008)}

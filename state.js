@@ -154,6 +154,8 @@ function makeState(){
       {province:"Asteria District",resource:"rubber",amount:6}
     ],
     resourceStock:{steel:90,oil:55,electronics:40,rubber:20},
+    economy:{taxRate:18,tradeIncome:4,adminCost:2,industrialOutput:1,construction:1},
+    strategicHq:{location:"Aurelia",capacity:4},
     ai:{
       NOR:{focus:"military",aggression:62,target:"ARD"},
       ALB:{focus:"trade",aggression:28,target:null},
@@ -232,6 +234,11 @@ function ensureStateIntegrity(){
   G.resourceStock ||= {steel:0,oil:0,electronics:0,rubber:0};
   G.ai ||= {};
   G.worldRules ||= {fogOfWar:false,ironman:false};
+  G.economy ||= {taxRate:18,tradeIncome:4,adminCost:2,industrialOutput:1,construction:1};
+  G.economy.taxRate=Number.isFinite(G.economy.taxRate)?G.economy.taxRate:18;
+  G.economy.tradeIncome=Number.isFinite(G.economy.tradeIncome)?G.economy.tradeIncome:4;
+  G.economy.adminCost=Number.isFinite(G.economy.adminCost)?G.economy.adminCost:2;
+  G.frontSelection ||= [];
   G.production ||= [];
   G.research ||= {infantry:null,industry:null,armor:null,radio:null};
   G.researchProgress ||= {infantry:0,industry:0,armor:0,radio:0};
@@ -244,6 +251,8 @@ function ensureStateIntegrity(){
     a.strength=clamp(a.strength);a.organization=clamp(a.organization);
     a.equipment=clamp(a.equipment);a.mobility=clamp(a.mobility);
     a.order ??= null;
+    a.general ??= null;
+    a.fuelUse ??= 0.15;
   });
   G.divisions.forEach(d=>{
     d.strength=clamp(d.strength);d.org=clamp(d.org);d.equipment=clamp(d.equipment);

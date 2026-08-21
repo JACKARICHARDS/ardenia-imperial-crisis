@@ -33,9 +33,17 @@ function drawMap(){
   const layer=document.createElementNS("http://www.w3.org/2000/svg","g");layer.setAttribute("clip-path","url(#continentClip)");
   G.provinces.forEach(p=>{
     const g=document.createElementNS("http://www.w3.org/2000/svg","g");g.classList.add("province");g.dataset.id=p.id;
-    const r=document.createElementNS("http://www.w3.org/2000/svg","rect");
-    r.setAttribute("x",p.x);r.setAttribute("y",p.y);r.setAttribute("width",p.w);r.setAttribute("height",p.h);r.setAttribute("rx","8");
-    r.setAttribute("fill",nationColor(p.owner));r.setAttribute("stroke","#1b201f");r.setAttribute("stroke-width","3");
+    const r=document.createElementNS("http://www.w3.org/2000/svg","path");
+    const j=(Number(String(p.id).replace(/\D/g,""))||0)%7;
+    const x=p.x,y=p.y,w=p.w,h=p.h;
+    const pts=[
+      [x+8+j,y+4],[x+w-18,y+7+j%4],[x+w-5,y+h*.34],
+      [x+w-12,y+h-8-j%5],[x+w*.52,y+h-4],[x+12+j%4,y+h-13],[x+4,y+h*.43]
+    ].map(v=>v.join(",")).join(" ");
+    r.setAttribute("d","M"+pts+"Z");
+    r.setAttribute("fill",nationColor(p.owner));
+    r.setAttribute("stroke",G.frontSelection?.includes(p.id)?"#e8cb82":"#1b201f");
+    r.setAttribute("stroke-width",G.frontSelection?.includes(p.id)?"5":"3");
     const t=document.createElementNS("http://www.w3.org/2000/svg","text");t.setAttribute("x",p.x+p.w/2);t.setAttribute("y",p.y+p.h/2);t.setAttribute("text-anchor","middle");t.setAttribute("fill","#f2ead5");t.setAttribute("font-size","13");t.setAttribute("font-family","Georgia");t.textContent=p.name;
     g.append(r,t);
     g.addEventListener("click",()=>selectProvince(p.id));
@@ -64,10 +72,10 @@ function drawUnits(){
     let dragging=false;
     g.addEventListener("mousedown",e=>{
       if(a.owner!==G.player)return;
-      dragging=true;e.preventDefault();
+      draggingUnit=true;e.preventDefault();
       g.style.cursor="grabbing";
       const move=ev=>{
-        if(!dragging)return;
+        if(!draggingUnit)return;
         const pt=svg.createSVGPoint();pt.x=ev.clientX;pt.y=ev.clientY;
         const ctm=svg.getScreenCTM();if(!ctm)return;
         const local=pt.matrixTransform(ctm.inverse());
@@ -75,7 +83,7 @@ function drawUnits(){
         if(over){const tip=document.getElementById("mapTip");tip.style.display="block";tip.style.left=(ev.offsetX+14)+"px";tip.style.top=(ev.offsetY+14)+"px";tip.innerHTML=`<b>Move ${a.name}</b>→ ${over.name}<br>Release to order movement.`}
       };
       const up=ev=>{
-        dragging=false;g.style.cursor="grab";document.removeEventListener("mousemove",move);document.removeEventListener("mouseup",up);
+        draggingUnit=false;g.style.cursor="grab";document.removeEventListener("mousemove",move);document.removeEventListener("mouseup",up);
         const pt=svg.createSVGPoint();pt.x=ev.clientX;pt.y=ev.clientY;const ctm=svg.getScreenCTM();if(!ctm)return;
         const local=pt.matrixTransform(ctm.inverse());
         const over=G.provinces.find(p=>local.x>=p.x&&local.x<=p.x+p.w&&local.y>=p.y&&local.y<=p.y+p.h);
@@ -121,11 +129,16 @@ function showMapTip(e,p){
 }
 function hideMapTip(){document.getElementById("mapTooltip").style.display="none"}
 function selectProvince(id){
-  if(G.frontSelection){
+  const frontBtn=document.getElementById("frontModeBtn");
+  const frontActive=frontBtn?.dataset.active==="1";
+  if(frontActive){
+    if(!G.frontSelection)G.frontSelection=[];
     if(!G.frontSelection.includes(id))G.frontSelection.push(id);
     toast(`${G.frontSelection.length} province${G.frontSelection.length===1?"":"s"} selected for front`);
     if(G.frontSelection.length>=2 && document.getElementById("frontNameInput")?.value){
       setFront(document.getElementById("frontNameInput").value,G.frontSelection);
+      frontBtn.dataset.active="0";
+      frontBtn.textContent="FRONT MODE";
     }
   }
   G.selected={type:"province",id};renderSelection();drawMap();
@@ -146,6 +159,7 @@ function initMap(){
   document.getElementById("showNames").onchange=applyMapView;
   document.getElementById("showSupply")?.addEventListener("change",drawMap);
   let dragging=false,last=null;
+  let draggingUnit=false;
   const svg=document.getElementById("worldMap");
   svg.addEventListener("wheel",e=>{e.preventDefault();mapZoom=clamp(mapZoom*(e.deltaY<0?1.08:.92),.75,2.2);applyMapView()},{passive:false});
   svg.addEventListener("mousedown",e=>{dragging=true;last={x:e.clientX,y:e.clientY}});

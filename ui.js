@@ -5,7 +5,7 @@ function fmt(n){return Number(n||0).toLocaleString()}
 function dateText(){return `${G.date.day} ${MONTHS[G.date.month-1]} ${G.date.year}`}
 function renderTop(){
   const stats=[
-    ["MONEY",G.treasury.toFixed(1),"good"],["MONTHLY IN",G.monthlyIncome?.toFixed(1)||"0","good"],["MONTHLY OUT",G.monthlyExpenses?.toFixed(1)||"0","bad"],["POLITICAL",G.politicalPower.toFixed(0),""],["STABILITY",G.stability+"%",""],["LEGITIMACY",G.legitimacy+"%",""],
+    ["MONEY",Number(G.treasury||0).toFixed(1),"good"],["MONTHLY IN",Number(G.monthlyIncome||0).toFixed(1),"good"],["MONTHLY OUT",Number(G.monthlyExpenses||0).toFixed(1),"bad"],["POLITICAL",G.politicalPower.toFixed(0),""],["STABILITY",G.stability+"%",""],["LEGITIMACY",G.legitimacy+"%",""],
     ["WAR SUPPORT",G.warSupport+"%",""],["MANPOWER",fmt(G.manpower),"good"],["FACTORIES",G.factories,""]
   ];
   document.getElementById("topStats").innerHTML=stats.map(s=>`<div class="stat ${s[2]}"><small>${s[0]}</small><b>${s[1]}</b></div>`).join("");
@@ -31,7 +31,7 @@ function renderGenerals(){
     return `<div class="army-card">
       <b>${g.name}</b><small>${g.rank} · ATK ${g.attack} · DEF ${g.defense} · LOG ${g.logistics}</small>
       <div class="button-grid" style="margin-top:5px">
-        ${(G.armies||[]).filter(a=>a.owner===G.player).slice(0,4).map(a=>`<button class="button tiny" onclick="assignGeneral('${a.id}','${g.id}')">${army?.id===a.id?"COMMANDING ":"ASSIGN "}${a.name.replace("Royal ","")}</button>`).join("")}
+        ${(G.armies||[]).filter(a=>a.owner===G.player).map(a=>`<button class="button tiny" onclick="assignGeneral('${a.id}','${g.id}')">${army?.id===a.id?"COMMANDING ":"ASSIGN "}${a.name.replace("Royal ","")}</button>`).join("")}
       </div>
     </div>`;
   }).join("") || '<div class="empty">No generals available.</div>';
@@ -71,7 +71,13 @@ function renderResearch(){
   document.getElementById("researchTab").innerHTML=`<div class="dossier"><h2>Research Directorate</h2><p>Four independent research fields let you build a specialized national development path.</p>${slots.map(s=>`<h3 style="color:var(--gold2);text-transform:uppercase;font:700 11px Arial;letter-spacing:.1em">${s} · ${G.research[s]?"ACTIVE":"AVAILABLE"}</h3>${G.technologies[s].map(t=>`<div class="row"><div><b>${t.name}</b><small>${t.desc} · ${t.cost} days</small></div>${t.done?`<span class="pill good">COMPLETE</span>`:G.research[s]===t.id?`<span class="pill">IN PROGRESS ${G.researchProgress[s]}/${t.cost}</span>`:`<button class="button" onclick="selectResearch('${s}','${t.id}')">RESEARCH</button>`}</div>`).join("")}`).join("")}</div>`;
 }
 function renderIndustry(){
-  document.getElementById("industryTab").innerHTML=`<div class="dossier"><h2>Industrial Command</h2><p>Military factories manufacture equipment while civilian industry supports the national economy.</p><div class="grid3"><div class="mini">MILITARY FACTORIES<b>${G.factories}</b></div><div class="mini">CIVILIAN FACTORIES<b>${G.civilianFactories}</b></div><div class="mini">FUEL<b>${G.fuel.toFixed(0)}</b></div></div>${G.production.map(l=>`<div class="row"><div><b>${l.name}</b><small>${l.assigned} factories · ${l.output}/day · stock ${l.stock}</small></div><div><button class="button tiny" onclick="assignFactory('${l.id}',-1)">−</button><button class="button tiny" onclick="assignFactory('${l.id}',1)">+</button></div></div>`).join("")}</div>`;
+  document.getElementById("industryTab").innerHTML=`<div class="dossier"><h2>Industrial Command</h2><div class="grid3"><div class="mini">TREASURY<b>${G.treasury.toFixed(1)}</b></div><div class="mini">TAX RATE<b>${G.economy.taxRate}%</b></div><div class="mini">BALANCE<b>${(G.monthlyIncome-G.monthlyExpenses).toFixed(1)}</b></div></div><div class="button-grid" style="margin:8px 0"><button class="button" onclick="setTaxRate(-2)">TAX -</button><button class="button" onclick="setTaxRate(2)">TAX +</button></div><p>Military factories manufacture equipment while civilian industry supports the national economy.</p><div class="grid3"><div class="mini">MILITARY FACTORIES<b>${G.factories}</b></div><div class="mini">CIVILIAN FACTORIES<b>${G.civilianFactories}</b></div><div class="mini">FUEL<b>${G.fuel.toFixed(0)}</b></div></div>${G.production.map(l=>`<div class="row"><div><b>${l.name}</b><small>${l.assigned} factories · ${l.output}/day · stock ${l.stock}</small></div><div><button class="button tiny" onclick="assignFactory('${l.id}',-1)">−</button><button class="button tiny" onclick="assignFactory('${l.id}',1)">+</button></div></div>`).join("")}</div>`;
+}
+
+function setTaxRate(delta){
+  G.economy.taxRate=Math.max(5,Math.min(35,G.economy.taxRate+delta));
+  addNews("Fiscal Policy",`The imperial tax rate is now ${G.economy.taxRate}%.`);
+  renderAll();
 }
 function renderDiplomacy(){
   document.getElementById("diplomacyTab").innerHTML=`<div class="dossier"><h2>Foreign Office</h2><p>Relations influence trade, alignment, guarantees and the political cost of war.</p>
@@ -79,7 +85,14 @@ function renderDiplomacy(){
 }
 function renderWar(){
   const wars=G.wars.map(w=>`<div class="row"><div><b>War with ${nationName(w.against)}</b><small>Started ${w.start}</small></div><span class="pill bad">ACTIVE</span></div>`).join("");
-  document.getElementById("warTab").innerHTML=`<div class="dossier"><h2>War Room</h2><p>Armies move between provinces. Battles are resolved automatically when an ordered army reaches a hostile province.</p>${wars||'<div class="empty">No active wars.</div>'}<h3 style="color:var(--gold2)">Command Fronts</h3>${(G.fronts||[]).map(f=>`<div class="row"><div><b>${f.name}</b><small>${f.provinceIds.length} provinces · ${f.armyIds.length} armies</small></div><span class="pill">${f.active?"ACTIVE":"PAUSED"}</span></div>`).join("")}<h3 style="color:var(--gold2)">Command principles</h3><p>1. Declare war through Diplomacy. 2. Select an army. 3. Click a hostile province. 4. Issue an attack order. 5. Advance the clock.</p></div>`;
+  const fronts=(G.fronts||[]).map(f=>`<div class="row"><div><b>${f.name}</b><small>${f.provinceIds.length} provinces · ${f.armyIds.length} armies · ${f.posture||"balanced"}</small></div><div>
+    <button class="button tiny" onclick="assignArmyToFront('${G.armies.find(a=>a.owner===G.player)?.id||""}','${f.id}')">ASSIGN ARMY</button>
+    <button class="button tiny" onclick="f=${0};toast('Use map Front Mode to redefine the line.')">EDIT</button>
+  </div></div>`).join("");
+  document.getElementById("warTab").innerHTML=`<div class="dossier"><h2>War Room</h2><p>Build fronts, assign armies and let active fronts generate movement orders. Battles resolve as units reach contested provinces.</p>
+  ${wars||'<div class="empty">No active wars.</div>'}
+  <h3 style="color:var(--gold2)">Command Fronts</h3>${fronts||'<div class="empty">No fronts established.</div>'}
+  <h3 style="color:var(--gold2)">Battle Plan</h3><p>Use <b>FRONT MODE</b> on the map, click at least two provinces, then select a province on the enemy side of the line. The front will push assigned armies toward its active objective.</p></div>`;
 }
 function renderLedger(){
   document.getElementById("ledgerTab").innerHTML=`<div class="dossier"><h2>Campaign Ledger</h2>${G.log.slice(0,60).map(x=>`<div class="row"><small>${x}</small></div>`).join("")}</div>`;
@@ -93,7 +106,7 @@ function initClock(){
   setInterval(()=>{if(!G.paused){for(let i=0;i<G.speed;i++)nextDay()}},1000);
 }
 function initPersistence(){
-  document.getElementById("saveBtn").onclick=()=>saveGame();
+  document.getElementById("saveBtn").onclick=()=>{ensureStateIntegrity();saveGame();};
   document.getElementById("loadBtn").onclick=()=>loadGame();
   document.getElementById("newBtn").onclick=()=>{if(confirm("Start a new campaign?")){G=makeState();saveGame(true);renderAll()}};
   document.getElementById("exportBtn").onclick=()=>exportGame();

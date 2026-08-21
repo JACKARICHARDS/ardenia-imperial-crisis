@@ -8,44 +8,72 @@ function nextDay(){
   G.date.day++;
   const md=[31,28,31,30,31,30,31,31,30,31,30,31][G.date.month-1];
   if(G.date.day>md){G.date.day=1;G.date.month++;if(G.date.month>12){G.date.month=1;G.date.year++;}}
-  economyTick();researchTick();productionTick();divisionTick();supplyTick();airTick();navalTick();aiTick();warTick();agendaTick();politicalTick();
+  economyTick();researchTick();productionTick();divisionTick();supplyTick();airTick();navalTick();aiTick();executeFrontPlans();warTick();agendaTick();politicalTick();
   if(G.date.day===1) monthlyNews();
   renderAll();
   saveGame(true);
 }
 function economyTick(){
-  const stabilityMod=(G.stability-50)/250;
-  const resourceDemand=G.production.reduce((n,l)=>n+l.assigned,0);
-  const steelNeed=resourceDemand*0.7, oilNeed=resourceDemand*0.25, electronicsNeed=resourceDemand*0.15;
-  const steelAvail=Math.min(G.resourceStock.steel,steelNeed);
-  const oilAvail=Math.min(G.resourceStock.oil,oilNeed);
-  const elecAvail=Math.min(G.resourceStock.electronics,electronicsNeed);
-  const resourceEfficiency=Math.min(
+  const stabilityMod=(Number(G.stability||50)-50)/250;
+  const usedFactories=G.production.reduce((n,l)=>n+(Number(l.assigned)||0),0);
+
+  const steelNeed=usedFactories*0.70;
+  const oilNeed=usedFactories*0.25;
+  const electronicsNeed=usedFactories*0.15;
+
+  const steelAvail=Math.min(Number(G.resourceStock?.steel)||0,steelNeed);
+  const oilAvail=Math.min(Number(G.resourceStock?.oil)||0,oilNeed);
+  const electronicsAvail=Math.min(Number(G.resourceStock?.electronics)||0,electronicsNeed);
+
+  const ratios=[
     steelNeed?steelAvail/steelNeed:1,
     oilNeed?oilAvail/oilNeed:1,
-    electronicsNeed?elecAvail/electronicsNeed:1
-  );
-  G.resourceStock.steel=Math.max(0,G.resourceStock.steel-steelAvail);
-  G.resourceStock.oil=Math.max(0,G.resourceStock.oil-oilAvail);
-  G.resourceStock.electronics=Math.max(0,G.resourceStock.electronics-elecAvail);
+    electronicsNeed?electronicsAvail/electronicsNeed:1
+  ];
+  const resourceEfficiency=Math.min(...ratios);
 
-  // Monthly finance model: tax/industry income against military, administration and war costs.
-  const dailyIncome = Math.max(0.05, (G.facts||1) * 0.015 + G.civilianFactories * 0.045);
-  const militaryCost = G.armies.filter(a=>a.owner===G.player).length * 0.025
-    + G.divisions.filter(d=>d.army && G.armies.some(a=>a.id===d.army && a.owner===G.player)).length * 0.004;
-  const navalCost = G.fleets.filter(f=>f.owner===G.player).reduce((n,f)=>n+f.ships*.0015,0);
-  G.monthlyIncome = dailyIncome * 30;
-  G.monthlyExpenses = Math.max(0,militaryCost + navalCost + G.warDebt*0.002);
-  G.treasury = Math.max(0, G.treasury + dailyIncome - (G.monthlyExpenses/30) + stabilityMod);
-  G.politicalPower=Math.min(250,G.politicalPower+(G.stability>40?0.85:0.45));
+  G.resourceStock.steel=Math.max(0,(Number(G.resourceStock.steel)||0)-steelAvail);
+  G.resourceStock.oil=Math.max(0,(Number(G.resourceStock.oil)||0)-oilAvail);
+  G.resourceStock.electronics=Math.max(0,(Number(G.resourceStock.electronics)||0)-electronicsAvail);
 
-  G.fuel=Math.max(0,G.fuel + G.resourceStock.oil*0.03 - G.armies.filter(a=>a.owner===G.player).length*0.7);
-  if(resourceEfficiency<0.75){
-    G.stability=clamp(G.stability-0.05);
-  }
-  G.manpower=Math.max(0,G.manpower-G.armies.filter(a=>a.owner===G.player).reduce((n,a)=>n+Math.max(0,100-a.strength)*.03,0));
+  const population=Math.max(1,Number(G.population)||100000000);
+  const taxRate=Math.max(5,Math.min(35,Number(G.economy.taxRate)||18));
+  const industryMultiplier=Math.max(.5,1+usedFactories*.015);
+
+  G.economy.industrialOutput=industryMultiplier;
+  const friendlyTrade=Object.values(G.diplomacy||{}).filter(d=>!d.war).reduce((n,d)=>n+Math.max(0,Number(d.relation)||0),0);
+  G.economy.tradeIncome=Math.max(0,4+friendlyTrade*0.002);
+
+  const taxIncome=(population/100000000)*taxRate*0.01;
+  const industrialIncome=(Number(G.civilianFactories)||0)*0.08*industryMultiplier;
+  const tradeIncome=G.economy.tradeIncome*0.01;
+  const adminCost=(Number(G.economy.adminCost)||2)+G.provinces.filter(p=>p.owner===G.player).length*0.006;
+  const armyCost=G.armies.filter(a=>a.owner===G.player).length*0.025;
+  const divisionCost=G.divisions.filter(d=>G.armies.some(a=>a.id===d.army&&a.owner===G.player)).length*0.004;
+  const navyCost=G.fleets.filter(f=>f.owner===G.player).reduce((n,f)=>n+(Number(f.ships)||0)*0.0015,0);
+  const debtCost=Math.max(0,(Number(G.warDebt)||0)*0.002);
+
+  const dailyIncome=taxIncome+industrialIncome+tradeIncome;
+  const dailyExpenses=adminCost+armyCost+divisionCost+navyCost+debtCost;
+
+  G.monthlyIncome=dailyIncome*30;
+  G.monthlyExpenses=dailyExpenses*30;
+  G.treasury=Math.max(0,(Number(G.treasury)||0)+dailyIncome-dailyExpenses+stabilityMod);
+
+  if(taxRate>25)G.approval=clamp(G.approval-0.02);
+  else if(taxRate<10)G.approval=clamp(G.approval+0.01);
+
+  G.politicalPower=Math.min(250,Number(G.politicalPower||0)+(G.stability>40?0.85:0.45));
+  G.fuel=Math.max(0,(Number(G.fuel)||0)+(Number(G.resourceStock.oil)||0)*0.03-G.armies.filter(a=>a.owner===G.player).length*0.7);
+
+  if(resourceEfficiency<0.75)G.stability=clamp(G.stability-0.05);
+  G.manpower=Math.max(0,(Number(G.manpower)||0)-
+    G.armies.filter(a=>a.owner===G.player).reduce((n,a)=>n+Math.max(0,100-a.strength)*.03,0));
+
+  if(!Number.isFinite(G.treasury))G.treasury=0;
+  if(!Number.isFinite(G.monthlyIncome))G.monthlyIncome=0;
+  if(!Number.isFinite(G.monthlyExpenses))G.monthlyExpenses=0;
 }
-
 function researchTick(){
   const r=G.research;
   Object.entries(r).forEach(([slot,id])=>{
@@ -56,7 +84,17 @@ function researchTick(){
   });
 }
 function productionTick(){
-  G.production.forEach(line=>{line.output=Math.max(0,Math.floor(line.assigned*(1+(G.technologies.industry.some(t=>t.done)?0.2:0))*.08));line.stock+=line.output});
+  const industryBonus=G.technologies.industry.some(t=>t.done)?1.2:1;
+  const resourceFactor=Math.min(
+    G.resourceStock.steel>5?1:0.55,
+    G.resourceStock.electronics>2?1:0.8,
+    G.resourceStock.oil>2?1:0.75
+  );
+  G.production.forEach(line=>{
+    const base=line.assigned*0.08*industryBonus*resourceFactor;
+    line.output=Math.max(0,Math.floor(base));
+    line.stock+=line.output;
+  });
 }
 function agendaTick(){
   if(!G.agenda)return;
@@ -139,22 +177,52 @@ function aiTick(){
     const nation=G.diplomacy[id]; if(!nation)return;
     const armies=G.armies.filter(a=>a.owner===id);
     if(ai.focus==="military"){
-      armies.forEach(a=>{
-        const targets=G.provinces.filter(p=>p.owner===G.player && adjacentProvince(a.province,p.name));
-        if(targets.length && ai.aggression>55 && nation.war){
-          const t=targets[Math.floor(Math.random()*targets.length)];
-          a.order={type:"attack",target:t.id,days:2};
-        }
-      });
+      if(nation.war){
+        armies.forEach(a=>{
+          const targets=G.provinces.filter(p=>p.owner===G.player && adjacentProvince(a.province,p.name));
+          if(targets.length && ai.aggression>50 && !a.order){
+            const t=targets[Math.floor(Math.random()*targets.length)];
+            a.order={type:"attack",target:t.id,days:Math.max(2,Math.round(4-a.mobility/35))};
+          }
+        });
+      } else if(ai.aggression>75 && Math.random()<0.003 && G.warSupport>=30){
+        const targetId=ai.target||G.player;
+        if(G.diplomacy[targetId]){G.diplomacy[targetId].war=true;G.warSupport=clamp(G.warSupport-2);addNews("Foreign Declaration",`${nationName(id)} has declared war on ${nationName(targetId)}.`);}
+      }
     }
     if(ai.focus==="trade" && nation.relation<30) nation.relation+=0.25;
-    if(ai.focus==="industry") G.ai[id].aggression=Math.max(15,ai.aggression-0.02);
-    if(nation.war && ai.aggression>70 && Math.random()<0.015){
-      addNews("Foreign Mobilization",`${nationName(id)} has intensified its military mobilization.`);
-    }
+    if(ai.focus==="industry") ai.aggression=Math.max(15,ai.aggression-0.01);
   });
 }
 
+
+function frontProvinceSequence(front){
+  return front.provinceIds.map(provinceById).filter(Boolean);
+}
+function executeFrontPlans(){
+  (G.fronts||[]).forEach(front=>{
+    if(!front.active || !front.armyIds?.length || front.objective) return;
+    const ps=frontProvinceSequence(front);
+    if(!ps.length)return;
+    // Use the first enemy province adjacent to a friendly front province as the current objective.
+    const hostile=ps.map(p=>(G.adjacency?.[p.name]||[]).map(provinceByName)).flat()
+      .filter(p=>p && p.owner!==G.player && G.diplomacy[p.owner]?.war);
+    if(hostile.length) front.objective=hostile[0].id;
+  });
+  (G.fronts||[]).forEach(front=>{
+    if(!front.active || !front.objective)return;
+    front.armyIds.forEach(id=>{
+      const a=G.armies.find(x=>x.id===id); if(!a || a.owner!==G.player || a.order)return;
+      const obj=provinceById(front.objective); if(!obj)return;
+      const current=provinceByName(a.province);
+      const next=(G.adjacency?.[current.name]||[]).map(provinceByName).filter(Boolean)
+        .filter(p=>frontProvinceSequence(front).includes(p) || p.owner!==G.player)
+        .sort((x,y)=>Math.abs((x.x+x.w/2)-(obj.x+obj.w/2))+Math.abs((x.y+x.h/2)-(obj.y+obj.h/2))
+                  - (Math.abs((y.x+y.w/2)-(obj.x+obj.w/2))+Math.abs((y.y+y.h/2)-(obj.y+obj.h/2))))[0];
+      if(next) a.order={type:"front_attack",target:next.id,days:Math.max(2,Math.round(4-a.mobility/35))};
+    });
+  });
+}
 function assignGeneral(armyId,generalId){
   const army=G.armies.find(a=>a.id===armyId);
   const gen=G.generals.find(g=>g.id===generalId);
@@ -165,6 +233,7 @@ function assignGeneral(armyId,generalId){
   }
   army.general=generalId;
   gen.army=armyId;
+  army.commandSkill=gen.skill;
   addNews("Command Appointment",`${gen.name} is now in command of ${army.name}.`);
   renderAll();
 }
@@ -181,8 +250,9 @@ function setFront(name, provinceIds){
   const ids=provinceIds.filter(id=>provinceById(id));
   if(ids.length<2){toast("Select at least two provinces for a front.");return}
   let front=G.fronts.find(f=>f.name===name);
-  if(!front){front={id:"FR"+Date.now(),name,armyIds:[],provinceIds:ids,active:true};G.fronts.push(front)}
+  if(!front){front={id:"FR"+Date.now(),name,armyIds:[],provinceIds:ids,active:true,objective:null,commander:null,posture:"balanced"};G.fronts.push(front)}
   else front.provinceIds=ids;
+  G.frontSelection=[];
   addNews("Front Established",`${name} front established across ${ids.length} provinces.`);
   renderAll();
 }
@@ -196,18 +266,63 @@ function assignArmyToFront(armyId,frontId){
 }
 
 function moveArmyToProvince(armyId,provinceId){
-  const army=G.armies.find(a=>a.id===armyId), target=provinceById(provinceId);
+  const army=G.armies.find(x=>x.id===armyId),target=provinceById(provinceId);
   if(!army||!target||army.owner!==G.player)return;
   const current=provinceByName(army.province);
-  const legal=(G.adjacency?.[current?.name]||[]).includes(target.name)||current?.name===target.name;
-  if(!legal){toast("That army can only move to an adjacent province.");return}
-  if(target.owner!==G.player && !G.diplomacy[target.owner]?.war){toast("You are not at war with this nation.");return}
-  army.province=target.name;
-  army.order=null;
-  addNews("Army Movement",`${army.name} moved to ${target.name}.`);
+  if(current?.name===target.name){toast("Army is already there.");return;}
+  const path=findPath(current?.name,target.name,army);
+  if(!path.length){toast("No legal route to that province.");return;}
+  army.order={type:"move",target:target.id,path:path.slice(1),step:0,days:1};
+  addNews("Field Order Issued",`${army.name} ordered to ${target.name}.`);
   renderAll();
 }
 
+function findPath(fromName,toName,army){
+  if(!fromName||!toName)return [];
+  const queue=[fromName];
+  const prev=new Map([[fromName,null]]);
+  while(queue.length){
+    const cur=queue.shift();
+    if(cur===toName)break;
+    for(const next of (G.adjacency?.[cur]||[])){
+      if(prev.has(next))continue;
+      const p=provinceByName(next);
+      if(!p)continue;
+      if(p.owner!==G.player && !G.diplomacy?.[p.owner]?.war && p.name!==toName)continue;
+      prev.set(next,cur);
+      queue.push(next);
+    }
+  }
+  if(!prev.has(toName))return [];
+  const path=[];let node=toName;
+  while(node!==null){path.unshift(node);node=prev.get(node);}
+  return path;
+}
+
+function advanceArmyOrders(){
+  G.armies.filter(a=>a.owner===G.player&&a.order?.path?.length).forEach(a=>{
+    if(a.order.days>0){a.order.days--;return;}
+    const nextName=a.order.path[0];
+    const next=provinceByName(nextName);
+    if(!next){a.order=null;return;}
+
+    if(next.owner!==G.player && !G.diplomacy?.[next.owner]?.war){
+      a.order=null;
+      return;
+    }
+
+    a.province=next.name;
+    a.organization=clamp(a.organization-1.5);
+    a.fuel=Math.max(0,(Number(a.fuel)||0)-Number(a.fuelUse||0.15));
+    a.order.path.shift();
+    a.order.days=Math.max(1,Math.round(3-(Number(a.mobility)||40)/35));
+
+    if(!a.order.path.length){
+      a.order=null;
+      addNews("Army Arrived",`${a.name} arrived at ${a.province}.`);
+    }
+  });
+}
 function formationBonus(army){
   if(!army.general)return {attack:0,defense:0,logistics:0};
   const g=G.generals.find(x=>x.id===army.general);if(!g)return {attack:0,defense:0,logistics:0};
